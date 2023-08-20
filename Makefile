@@ -6,3 +6,7 @@ go.mod go.sum:
 
 bin/bento: main.go go.mod
 	go build -o bin/bento main.go
+
+.PHONY: test
+test:
+	go test -cover -count 1 ./...
