@@ -20,7 +20,7 @@ func TestRun_versionFlg(t *testing.T) {
 		t.Errorf("ExitStatus=%d, want %d", status, ExitCodeOK)
 	}
 
-	expected := fmt.Sprintf("bento version")
+	expected := fmt.Sprintf("bento version %s", Version)
 	if !strings.Contains(errStream.String(), expected) {
 		t.Errorf("Output=%q, want %q", errStream.String(), expected)
 	}

@@ -10,3 +10,19 @@ bin/bento: main.go go.mod
 .PHONY: test
 test:
 	go test -cover -count 1 ./...
+
+.PHONY: vet
+vet:
+	go vet ./...
+
+.PHONY: errcheck
+errcheck:
+	errcheck ./...
+
+.PHONY: staticcheck
+staticcheck:
+	staticcheck -checks="all,-ST1000" ./...
+
+.PHONY: clean
+clean:
+	rm -rf bin/*
