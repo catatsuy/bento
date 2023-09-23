@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/catatsuy/bento/cli"
+	. "github.com/catatsuy/bento/internal/cli"
 )
 
 func TestRun_versionFlg(t *testing.T) {

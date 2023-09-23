@@ -10,7 +10,7 @@ import (
 	"runtime/debug"
 	"syscall"
 
-	"github.com/catatsuy/bento/openai"
+	"github.com/catatsuy/bento/internal/openai"
 )
 
 const (

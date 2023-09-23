@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/catatsuy/bento/cli"
+	"github.com/catatsuy/bento/internal/cli"
 )
 
 func main() {

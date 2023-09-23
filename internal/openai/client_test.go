@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/catatsuy/bento/openai"
+	. "github.com/catatsuy/bento/internal/openai"
 	"github.com/google/go-cmp/cmp"
 )
 
