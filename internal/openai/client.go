@@ -64,7 +64,7 @@ func NewClient(urlStr string) (*Client, error) {
 
 	client := &Client{
 		URL:        parsedURL,
-		HTTPClient: &http.Client{Timeout: 5 * time.Second},
+		HTTPClient: &http.Client{Timeout: 30 * time.Second},
 	}
 
 	return client, nil

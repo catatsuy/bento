@@ -1,13 +1,16 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"os/signal"
 	"runtime"
 	"runtime/debug"
+	"strings"
 	"syscall"
 
 	"github.com/catatsuy/bento/internal/openai"
@@ -27,10 +30,16 @@ type CLI struct {
 	inputStream          io.Reader
 
 	appVersion string
+
+	translator Translator
 }
 
-func NewCLI(outStream, errStream io.Writer, inputStream io.Reader) *CLI {
-	return &CLI{appVersion: version(), outStream: outStream, errStream: errStream, inputStream: inputStream}
+type Translator interface {
+	translateText(ctx context.Context, text string) (string, error)
+}
+
+func NewCLI(outStream, errStream io.Writer, inputStream io.Reader, tr Translator) *CLI {
+	return &CLI{appVersion: version(), outStream: outStream, errStream: errStream, inputStream: inputStream, translator: tr}
 }
 
 func (c *CLI) Run(args []string) int {
@@ -41,6 +50,8 @@ func (c *CLI) Run(args []string) int {
 	var (
 		version bool
 		help    bool
+
+		translateFile string
 	)
 
 	flags := flag.NewFlagSet("bento", flag.ContinueOnError)
@@ -49,6 +60,8 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&version, "version", false, "Print version information and quit")
 	flags.BoolVar(&help, "help", false, "Print help information and quit")
 	flags.BoolVar(&help, "h", false, "Print help information and quit")
+
+	flags.StringVar(&translateFile, "translate", "", "Translate file")
 
 	err := flags.Parse(args[1:])
 	if err != nil {
@@ -71,13 +84,14 @@ func (c *CLI) Run(args []string) int {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
-	translatedText, err := translateText(ctx, args[1])
-	if err != nil {
-		fmt.Fprintf(c.errStream, "Error: %v\n", err)
-		return ExitCodeFail
+	if translateFile != "" {
+		err := c.translateFile(ctx, translateFile)
+		if err != nil {
+			fmt.Fprintf(c.errStream, "Error: %v\n", err)
+			return ExitCodeFail
+		}
+		return ExitCodeOK
 	}
-
-	fmt.Fprintf(c.outStream, "%s\n", translatedText)
 
 	return ExitCodeOK
 }
@@ -94,7 +108,76 @@ func version() string {
 	return info.Main.Version
 }
 
-func translateText(ctx context.Context, input string) (string, error) {
+func (c *CLI) translateFile(ctx context.Context, file string) error {
+	f, err := os.Open(file)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer f.Close()
+
+	var b strings.Builder
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		text := strings.TrimSpace(scanner.Text())
+		if len(text) == 0 {
+			continue
+		}
+		lastChar := text[len(text)-1]
+		if lastChar == '.' {
+			text = text + "\n"
+		} else if lastChar <= 0x7f {
+			text = text + " "
+		}
+		b.WriteString(text)
+
+		if b.Len() > 1000 {
+			translatedText, err := c.translator.translateText(ctx, b.String())
+			if err != nil {
+				return fmt.Errorf("failed to translate text: %w", err)
+			}
+
+			fmt.Fprintf(c.outStream, "%s\n", translatedText)
+
+			b.Reset()
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to scan file: %w", err)
+	}
+
+	if b.Len() > 0 {
+		translatedText, err := c.translator.translateText(ctx, b.String())
+		if err != nil {
+			return fmt.Errorf("failed to translate text: %w", err)
+		}
+
+		fmt.Fprintf(c.outStream, "%s\n", translatedText)
+
+		b.Reset()
+	}
+
+	return nil
+}
+
+type translator struct {
+	Translator
+
+	client *openai.Client
+}
+
+func NewTranslator() (*translator, error) {
+	client, err := openai.NewClient(openai.OpenAIAPIURL)
+	if err != nil {
+		return nil, fmt.Errorf("NewClient: %w", err)
+	}
+	return &translator{
+		client: client,
+	}, nil
+}
+
+func (tr *translator) translateText(ctx context.Context, input string) (string, error) {
 	if len(input) == 0 {
 		return "", fmt.Errorf("no input")
 	}
@@ -111,12 +194,7 @@ func translateText(ctx context.Context, input string) (string, error) {
 		},
 	}
 
-	client, err := openai.NewClient(openai.OpenAIAPIURL)
-	if err != nil {
-		return "", fmt.Errorf("NewClient: %w", err)
-	}
-
-	resp, err := client.Chat(ctx, data)
+	resp, err := tr.client.Chat(ctx, data)
 	if err != nil {
 		return "", fmt.Errorf("http request: %w", err)
 	}
