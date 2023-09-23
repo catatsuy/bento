@@ -40,12 +40,15 @@ func (c *CLI) Run(args []string) int {
 
 	var (
 		version bool
+		help    bool
 	)
 
 	flags := flag.NewFlagSet("bento", flag.ContinueOnError)
 	flags.SetOutput(c.errStream)
 
 	flags.BoolVar(&version, "version", false, "Print version information and quit")
+	flags.BoolVar(&help, "help", false, "Print help information and quit")
+	flags.BoolVar(&help, "h", false, "Print help information and quit")
 
 	err := flags.Parse(args[1:])
 	if err != nil {
@@ -55,6 +58,13 @@ func (c *CLI) Run(args []string) int {
 
 	if version {
 		fmt.Fprintf(c.errStream, "bento version %s; %s\n", Version, runtime.Version())
+		return ExitCodeOK
+	}
+
+	if help {
+		fmt.Fprintf(c.errStream, "bento version %s; %s\n", Version, runtime.Version())
+		fmt.Fprintf(c.errStream, "Usage of bento:\n")
+		flags.PrintDefaults()
 		return ExitCodeOK
 	}
 
