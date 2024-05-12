@@ -10,6 +10,10 @@ func (m *MockTranslator) translateText(ctx context.Context, text string) (string
 	return m.TranslateTextFunc(ctx, text)
 }
 
+func (m *MockTranslator) suggestBranch(ctx context.Context, text string) (string, error) {
+	return m.TranslateTextFunc(ctx, text)
+}
+
 func (c *CLI) TranslateFile(ctx context.Context, file string) error {
 	return c.translateFile(ctx, file)
 }

@@ -36,6 +36,7 @@ type CLI struct {
 
 type Translator interface {
 	translateText(ctx context.Context, text string) (string, error)
+	suggestBranch(ctx context.Context, input string) (string, error)
 }
 
 func NewCLI(outStream, errStream io.Writer, inputStream io.Reader, tr Translator) *CLI {
@@ -51,6 +52,8 @@ func (c *CLI) Run(args []string) int {
 		version bool
 		help    bool
 
+		branchSuggestion bool
+
 		translateFile string
 	)
 
@@ -62,6 +65,8 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&help, "h", false, "Print help information and quit")
 
 	flags.StringVar(&translateFile, "translate", "", "Translate file")
+
+	flags.BoolVar(&branchSuggestion, "branch", false, "Suggest branch name")
 
 	err := flags.Parse(args[1:])
 	if err != nil {
@@ -83,6 +88,28 @@ func (c *CLI) Run(args []string) int {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
+
+	if branchSuggestion {
+		b := strings.Builder{}
+		scanner := bufio.NewScanner(c.inputStream)
+		for scanner.Scan() {
+			text := strings.TrimSpace(scanner.Text())
+			if len(text) == 0 {
+				continue
+			}
+			b.WriteString(text + "\n")
+		}
+
+		suggestion, err := c.translator.suggestBranch(ctx, b.String())
+		if err != nil {
+			fmt.Fprintf(c.errStream, "Error: %v\n", err)
+			return ExitCodeFail
+		}
+
+		fmt.Fprintf(c.outStream, "%s\n", suggestion)
+
+		return ExitCodeOK
+	}
 
 	if translateFile != "" {
 		err := c.translateFile(ctx, translateFile)
@@ -183,6 +210,35 @@ func (tr *translator) translateText(ctx context.Context, input string) (string, 
 	}
 
 	prompt := fmt.Sprintf("英語を日本語に翻訳してください。返事は翻訳された文章のみにしてください。" + input)
+
+	data := &openai.Payload{
+		Model: "gpt-3.5-turbo",
+		Messages: []openai.Message{
+			{
+				Role:    "user",
+				Content: prompt,
+			},
+		},
+	}
+
+	resp, err := tr.client.Chat(ctx, data)
+	if err != nil {
+		return "", fmt.Errorf("http request: %w", err)
+	}
+
+	if len(resp.Choices) > 0 {
+		return resp.Choices[0].Message.Content, nil
+	}
+
+	return "", fmt.Errorf("no translation found")
+}
+
+func (tr *translator) suggestBranch(ctx context.Context, input string) (string, error) {
+	if len(input) == 0 {
+		return "", fmt.Errorf("no input")
+	}
+
+	prompt := fmt.Sprintf("Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n" + input)
 
 	data := &openai.Payload{
 		Model: "gpt-3.5-turbo",
