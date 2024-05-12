@@ -99,10 +99,12 @@ func (c *CLI) Run(args []string) int {
 	if branchSuggestion {
 		prompt = "Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n"
 	} else if commitMessage {
-		prompt = "Generate a commit message directly from the provided source code differences without any additional text or formatting:\n\n"
+		prompt = "Generate a commit message directly from the provided source code differences without any additional text or formatting within 72 characters:\n\n"
 	}
 
-	if branchSuggestion || commitMessage {
+	singleMode := branchSuggestion || commitMessage
+
+	if singleMode {
 		b := strings.Builder{}
 		scanner := bufio.NewScanner(c.inputStream)
 		for scanner.Scan() {
@@ -222,36 +224,7 @@ func (tr *translator) translateText(ctx context.Context, input string) (string, 
 		return "", fmt.Errorf("no input")
 	}
 
-	prompt := fmt.Sprintf("英語を日本語に翻訳してください。返事は翻訳された文章のみにしてください。" + input)
-
-	data := &openai.Payload{
-		Model: "gpt-3.5-turbo",
-		Messages: []openai.Message{
-			{
-				Role:    "user",
-				Content: prompt,
-			},
-		},
-	}
-
-	resp, err := tr.client.Chat(ctx, data)
-	if err != nil {
-		return "", fmt.Errorf("http request: %w", err)
-	}
-
-	if len(resp.Choices) > 0 {
-		return resp.Choices[0].Message.Content, nil
-	}
-
-	return "", fmt.Errorf("no translation found")
-}
-
-func (tr *translator) suggestBranch(ctx context.Context, input string) (string, error) {
-	if len(input) == 0 {
-		return "", fmt.Errorf("no input")
-	}
-
-	prompt := fmt.Sprintf("Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n" + input)
+	prompt := "Translate the following text to Japanese without any additional text or formatting:\n\n" + input
 
 	data := &openai.Payload{
 		Model: "gpt-3.5-turbo",
