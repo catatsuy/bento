@@ -10,7 +10,7 @@ func (m *MockTranslator) translateText(ctx context.Context, text string) (string
 	return m.TranslateTextFunc(ctx, text)
 }
 
-func (m *MockTranslator) suggestBranch(ctx context.Context, text string) (string, error) {
+func (m *MockTranslator) request(ctx context.Context, prompt, text, model string) (string, error) {
 	return m.TranslateTextFunc(ctx, text)
 }
 

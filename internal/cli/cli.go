@@ -36,7 +36,7 @@ type CLI struct {
 
 type Translator interface {
 	translateText(ctx context.Context, text string) (string, error)
-	suggestBranch(ctx context.Context, input string) (string, error)
+	request(ctx context.Context, prompt, input, model string) (string, error)
 }
 
 func NewCLI(outStream, errStream io.Writer, inputStream io.Reader, tr Translator) *CLI {
@@ -53,6 +53,7 @@ func (c *CLI) Run(args []string) int {
 		help    bool
 
 		branchSuggestion bool
+		commitMessage    bool
 
 		translateFile string
 	)
@@ -67,6 +68,7 @@ func (c *CLI) Run(args []string) int {
 	flags.StringVar(&translateFile, "translate", "", "Translate file")
 
 	flags.BoolVar(&branchSuggestion, "branch", false, "Suggest branch name")
+	flags.BoolVar(&commitMessage, "commit", false, "Suggest commit message")
 
 	err := flags.Parse(args[1:])
 	if err != nil {
@@ -100,7 +102,33 @@ func (c *CLI) Run(args []string) int {
 			b.WriteString(text + "\n")
 		}
 
-		suggestion, err := c.translator.suggestBranch(ctx, b.String())
+		prompt := "Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n"
+
+		suggestion, err := c.translator.request(ctx, prompt, b.String(), "gpt-3.5-turbo")
+		if err != nil {
+			fmt.Fprintf(c.errStream, "Error: %v\n", err)
+			return ExitCodeFail
+		}
+
+		fmt.Fprintf(c.outStream, "%s\n", suggestion)
+
+		return ExitCodeOK
+	}
+
+	if commitMessage {
+		b := strings.Builder{}
+		scanner := bufio.NewScanner(c.inputStream)
+		for scanner.Scan() {
+			text := strings.TrimSpace(scanner.Text())
+			if len(text) == 0 {
+				continue
+			}
+			b.WriteString(text + "\n")
+		}
+
+		prompt := "Generate a commit message directly from the provided source code differences without any additional text or formatting:\n\n"
+
+		suggestion, err := c.translator.request(ctx, prompt, b.String(), "gpt-3.5-turbo")
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
@@ -246,6 +274,35 @@ func (tr *translator) suggestBranch(ctx context.Context, input string) (string, 
 			{
 				Role:    "user",
 				Content: prompt,
+			},
+		},
+	}
+
+	resp, err := tr.client.Chat(ctx, data)
+	if err != nil {
+		return "", fmt.Errorf("http request: %w", err)
+	}
+
+	if len(resp.Choices) > 0 {
+		return resp.Choices[0].Message.Content, nil
+	}
+
+	return "", fmt.Errorf("no translation found")
+}
+
+func (tr *translator) request(ctx context.Context, prompt, input, model string) (string, error) {
+	if len(input) == 0 {
+		return "", fmt.Errorf("no input")
+	}
+
+	// prompt := fmt.Sprintf("Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n" + input)
+
+	data := &openai.Payload{
+		Model: model,
+		Messages: []openai.Message{
+			{
+				Role:    "user",
+				Content: prompt + input,
 			},
 		},
 	}
