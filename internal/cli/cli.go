@@ -55,6 +55,8 @@ func (c *CLI) Run(args []string) int {
 		branchSuggestion bool
 		commitMessage    bool
 
+		useModel string
+
 		translateFile string
 	)
 
@@ -69,6 +71,7 @@ func (c *CLI) Run(args []string) int {
 
 	flags.BoolVar(&branchSuggestion, "branch", false, "Suggest branch name")
 	flags.BoolVar(&commitMessage, "commit", false, "Suggest commit message")
+	flags.StringVar(&useModel, "model", "gpt-3.5-turbo", "Use model (gpt-3.5-turbo, gpt-4-turbo etc (default: gpt-3.5-turbo))")
 
 	err := flags.Parse(args[1:])
 	if err != nil {
@@ -104,7 +107,7 @@ func (c *CLI) Run(args []string) int {
 
 		prompt := "Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n"
 
-		suggestion, err := c.translator.request(ctx, prompt, b.String(), "gpt-3.5-turbo")
+		suggestion, err := c.translator.request(ctx, prompt, b.String(), useModel)
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
@@ -128,7 +131,7 @@ func (c *CLI) Run(args []string) int {
 
 		prompt := "Generate a commit message directly from the provided source code differences without any additional text or formatting:\n\n"
 
-		suggestion, err := c.translator.request(ctx, prompt, b.String(), "gpt-3.5-turbo")
+		suggestion, err := c.translator.request(ctx, prompt, b.String(), useModel)
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
