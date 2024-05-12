@@ -94,31 +94,15 @@ func (c *CLI) Run(args []string) int {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
+	var prompt string
+
 	if branchSuggestion {
-		b := strings.Builder{}
-		scanner := bufio.NewScanner(c.inputStream)
-		for scanner.Scan() {
-			text := strings.TrimSpace(scanner.Text())
-			if len(text) == 0 {
-				continue
-			}
-			b.WriteString(text + "\n")
-		}
-
-		prompt := "Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n"
-
-		suggestion, err := c.translator.request(ctx, prompt, b.String(), useModel)
-		if err != nil {
-			fmt.Fprintf(c.errStream, "Error: %v\n", err)
-			return ExitCodeFail
-		}
-
-		fmt.Fprintf(c.outStream, "%s\n", suggestion)
-
-		return ExitCodeOK
+		prompt = "Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n"
+	} else if commitMessage {
+		prompt = "Generate a commit message directly from the provided source code differences without any additional text or formatting:\n\n"
 	}
 
-	if commitMessage {
+	if branchSuggestion || commitMessage {
 		b := strings.Builder{}
 		scanner := bufio.NewScanner(c.inputStream)
 		for scanner.Scan() {
@@ -128,8 +112,6 @@ func (c *CLI) Run(args []string) int {
 			}
 			b.WriteString(text + "\n")
 		}
-
-		prompt := "Generate a commit message directly from the provided source code differences without any additional text or formatting:\n\n"
 
 		suggestion, err := c.translator.request(ctx, prompt, b.String(), useModel)
 		if err != nil {
