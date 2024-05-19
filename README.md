@@ -8,8 +8,14 @@ benri translator and optimizer
 
 ```.gitconfig
 [alias]
-sb = !git diff | bento -branch -model "gpt-4-turbo"
-sc = !git diff --staged | bento -commit -model "gpt-4-turbo"
+sb = !git diff -w | bento -branch -model "gpt-4o"
+sc = !git diff -w --staged | bento -commit -model "gpt-4o"
+```
+
+To show new files in git diff, use the `git add -N` command. This stages the new files without adding content.
+
+```bash
+git add -N .
 ```
 
 ## Name Origin of "bento" 🍱
