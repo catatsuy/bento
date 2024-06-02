@@ -72,7 +72,7 @@ func TestCLI_translateFile(t *testing.T) {
 	defer tmpFile.Close()
 
 	mockTranslator := &MockTranslator{
-		TranslateTextFunc: func(ctx context.Context, text string) (string, error) {
+		TranslateTextFunc: func(ctx context.Context, prompt, text, model string) (string, error) {
 			return "これはテストです。\nドットなしの別の行", nil
 		},
 	}
@@ -80,7 +80,7 @@ func TestCLI_translateFile(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
 	cl := NewCLI(outStream, errStream, inputStream, mockTranslator)
 
-	err = cl.TranslateFile(ctx, tmpFile.Name())
+	err = cl.TranslateFile(ctx, tmpFile.Name(), "", "test", 1000)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}

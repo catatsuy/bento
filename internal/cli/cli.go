@@ -19,6 +19,8 @@ import (
 const (
 	ExitCodeOK   = 0
 	ExitCodeFail = 1
+
+	DefaultExceedThreshold = 4000
 )
 
 var (
@@ -35,7 +37,6 @@ type CLI struct {
 }
 
 type Translator interface {
-	translateText(ctx context.Context, text string) (string, error)
 	request(ctx context.Context, prompt, input, model string) (string, error)
 }
 
@@ -54,10 +55,14 @@ func (c *CLI) Run(args []string) int {
 
 		branchSuggestion bool
 		commitMessage    bool
+		translate        bool
 
-		useModel string
+		language   string
+		prompt     string
+		useModel   string
+		targetFile string
 
-		translateFile string
+		limit int
 	)
 
 	flags := flag.NewFlagSet("bento", flag.ContinueOnError)
@@ -67,11 +72,17 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&help, "help", false, "Print help information and quit")
 	flags.BoolVar(&help, "h", false, "Print help information and quit")
 
-	flags.StringVar(&translateFile, "translate", "", "Translate file")
+	flags.StringVar(&targetFile, "file", "", "specify a target file")
 
 	flags.BoolVar(&branchSuggestion, "branch", false, "Suggest branch name")
 	flags.BoolVar(&commitMessage, "commit", false, "Suggest commit message")
-	flags.StringVar(&useModel, "model", "gpt-3.5-turbo", "Use model (gpt-3.5-turbo, gpt-4-turbo etc (default: gpt-3.5-turbo))")
+	flags.BoolVar(&translate, "translate", false, "Translate text")
+
+	flags.IntVar(&limit, "limit", DefaultExceedThreshold, "Limit the number of characters to translate")
+
+	flags.StringVar(&language, "language", "en", "Translate to language (default: en)")
+	flags.StringVar(&prompt, "prompt", "", "Prompt text")
+	flags.StringVar(&useModel, "model", "gpt-3.5-turbo", "Use model (gpt-3.5-turbo, gpt-4-turbo and gpt-4o etc (default: gpt-3.5-turbo))")
 
 	err := flags.Parse(args[1:])
 	if err != nil {
@@ -94,12 +105,12 @@ func (c *CLI) Run(args []string) int {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
-	var prompt string
-
 	if branchSuggestion {
 		prompt = "Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n"
 	} else if commitMessage {
 		prompt = "Generate a commit message directly from the provided source code differences without any additional text or formatting within 72 characters:\n\n"
+	} else if translate {
+		prompt = "Translate the following text to " + language + " without any additional text or formatting:\n\n"
 	}
 
 	singleMode := branchSuggestion || commitMessage
@@ -126,8 +137,8 @@ func (c *CLI) Run(args []string) int {
 		return ExitCodeOK
 	}
 
-	if translateFile != "" {
-		err := c.translateFile(ctx, translateFile)
+	if targetFile != "" {
+		err := c.translateFile(ctx, targetFile, prompt, useModel, limit)
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
@@ -150,8 +161,8 @@ func version() string {
 	return info.Main.Version
 }
 
-func (c *CLI) translateFile(ctx context.Context, file string) error {
-	f, err := os.Open(file)
+func (c *CLI) translateFile(ctx context.Context, targetFile, prompt, useModel string, limit int) error {
+	f, err := os.Open(targetFile)
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
 	}
@@ -165,16 +176,10 @@ func (c *CLI) translateFile(ctx context.Context, file string) error {
 		if len(text) == 0 {
 			continue
 		}
-		lastChar := text[len(text)-1]
-		if lastChar == '.' {
-			text = text + "\n"
-		} else if lastChar <= 0x7f {
-			text = text + " "
-		}
-		b.WriteString(text)
+		b.WriteString(text + "\n")
 
-		if b.Len() > 1000 {
-			translatedText, err := c.translator.translateText(ctx, b.String())
+		if b.Len() > limit {
+			translatedText, err := c.translator.request(ctx, prompt, b.String(), useModel)
 			if err != nil {
 				return fmt.Errorf("failed to translate text: %w", err)
 			}
@@ -190,7 +195,7 @@ func (c *CLI) translateFile(ctx context.Context, file string) error {
 	}
 
 	if b.Len() > 0 {
-		translatedText, err := c.translator.translateText(ctx, b.String())
+		translatedText, err := c.translator.request(ctx, prompt, b.String(), useModel)
 		if err != nil {
 			return fmt.Errorf("failed to translate text: %w", err)
 		}
@@ -219,44 +224,13 @@ func NewTranslator() (*translator, error) {
 	}, nil
 }
 
-func (tr *translator) translateText(ctx context.Context, input string) (string, error) {
+func (tr *translator) request(ctx context.Context, prompt, input, useModel string) (string, error) {
 	if len(input) == 0 {
 		return "", fmt.Errorf("no input")
 	}
 
-	prompt := "Translate the following text to Japanese without any additional text or formatting:\n\n" + input
-
 	data := &openai.Payload{
-		Model: "gpt-3.5-turbo",
-		Messages: []openai.Message{
-			{
-				Role:    "user",
-				Content: prompt,
-			},
-		},
-	}
-
-	resp, err := tr.client.Chat(ctx, data)
-	if err != nil {
-		return "", fmt.Errorf("http request: %w", err)
-	}
-
-	if len(resp.Choices) > 0 {
-		return resp.Choices[0].Message.Content, nil
-	}
-
-	return "", fmt.Errorf("no translation found")
-}
-
-func (tr *translator) request(ctx context.Context, prompt, input, model string) (string, error) {
-	if len(input) == 0 {
-		return "", fmt.Errorf("no input")
-	}
-
-	// prompt := fmt.Sprintf("Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n" + input)
-
-	data := &openai.Payload{
-		Model: model,
+		Model: useModel,
 		Messages: []openai.Message{
 			{
 				Role:    "user",
