@@ -62,6 +62,9 @@ func (c *CLI) Run(args []string) int {
 		useModel   string
 		targetFile string
 
+		isMultiMode  bool
+		isSingleMode bool
+
 		limit int
 	)
 
@@ -79,6 +82,9 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&translate, "translate", false, "Translate text")
 
 	flags.IntVar(&limit, "limit", DefaultExceedThreshold, "Limit the number of characters to translate")
+
+	flags.BoolVar(&isMultiMode, "multi", false, "Multi mode")
+	flags.BoolVar(&isSingleMode, "single", false, "Single mode")
 
 	flags.StringVar(&language, "language", "en", "Translate to language (default: en)")
 	flags.StringVar(&prompt, "prompt", "", "Prompt text")
@@ -106,16 +112,25 @@ func (c *CLI) Run(args []string) int {
 	defer stop()
 
 	if branchSuggestion {
+		isSingleMode = true
+		isMultiMode = false
 		prompt = "Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n"
 	} else if commitMessage {
+		isSingleMode = true
+		isMultiMode = false
 		prompt = "Generate a commit message directly from the provided source code differences without any additional text or formatting within 72 characters:\n\n"
 	} else if translate {
+		isMultiMode = true
+		isSingleMode = false
 		prompt = "Translate the following text to " + language + " without any additional text or formatting:\n\n"
 	}
 
-	singleMode := branchSuggestion || commitMessage
+	if !isSingleMode && !isMultiMode {
+		fmt.Fprintf(c.errStream, "Error: no mode specified\n")
+		return ExitCodeFail
+	}
 
-	if singleMode {
+	if isSingleMode {
 		b := strings.Builder{}
 		scanner := bufio.NewScanner(c.inputStream)
 		for scanner.Scan() {
@@ -137,8 +152,18 @@ func (c *CLI) Run(args []string) int {
 		return ExitCodeOK
 	}
 
-	if targetFile != "" {
-		err := c.translateFile(ctx, targetFile, prompt, useModel, limit)
+	if isMultiMode {
+		if targetFile != "" {
+			f, err := os.Open(targetFile)
+			if err != nil {
+				fmt.Fprintf(c.errStream, "Error: %v\n", err)
+				return ExitCodeFail
+			}
+			defer f.Close()
+			c.inputStream = f
+		}
+
+		err = c.multiRequest(ctx, prompt, useModel, limit)
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
@@ -161,16 +186,10 @@ func version() string {
 	return info.Main.Version
 }
 
-func (c *CLI) translateFile(ctx context.Context, targetFile, prompt, useModel string, limit int) error {
-	f, err := os.Open(targetFile)
-	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
-	}
-	defer f.Close()
-
+func (c *CLI) multiRequest(ctx context.Context, prompt, useModel string, limit int) error {
 	var b strings.Builder
 
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(c.inputStream)
 	for scanner.Scan() {
 		text := strings.TrimSpace(scanner.Text())
 		if len(text) == 0 {
