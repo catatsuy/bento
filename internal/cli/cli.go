@@ -130,18 +130,24 @@ func (c *CLI) Run(args []string) int {
 		return ExitCodeFail
 	}
 
+	if targetFile != "" {
+		f, err := os.Open(targetFile)
+		if err != nil {
+			fmt.Fprintf(c.errStream, "Error: %v\n", err)
+			return ExitCodeFail
+		}
+		defer f.Close()
+		c.inputStream = f
+	}
+
 	if isSingleMode {
-		b := strings.Builder{}
-		scanner := bufio.NewScanner(c.inputStream)
-		for scanner.Scan() {
-			text := strings.TrimSpace(scanner.Text())
-			if len(text) == 0 {
-				continue
-			}
-			b.WriteString(text + "\n")
+		by, err := io.ReadAll(c.inputStream)
+		if err != nil {
+			fmt.Fprintf(c.errStream, "Error: %v\n", err)
+			return ExitCodeFail
 		}
 
-		suggestion, err := c.translator.request(ctx, prompt, b.String(), useModel)
+		suggestion, err := c.translator.request(ctx, prompt, string(by), useModel)
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
@@ -153,16 +159,6 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	if isMultiMode {
-		if targetFile != "" {
-			f, err := os.Open(targetFile)
-			if err != nil {
-				fmt.Fprintf(c.errStream, "Error: %v\n", err)
-				return ExitCodeFail
-			}
-			defer f.Close()
-			c.inputStream = f
-		}
-
 		err = c.multiRequest(ctx, prompt, useModel, limit)
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
