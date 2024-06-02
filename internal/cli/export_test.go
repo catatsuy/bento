@@ -10,6 +10,6 @@ func (m *MockTranslator) request(ctx context.Context, prompt, text, model string
 	return m.TranslateTextFunc(ctx, prompt, text, model)
 }
 
-func (c *CLI) TranslateFile(ctx context.Context, targetFile, prompt, useModel string, limit int) error {
-	return c.translateFile(ctx, targetFile, prompt, useModel, limit)
+func (c *CLI) MultiRequest(ctx context.Context, prompt, useModel string, limit int) error {
+	return c.multiRequest(ctx, prompt, useModel, limit)
 }

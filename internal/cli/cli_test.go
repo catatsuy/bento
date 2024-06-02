@@ -77,10 +77,10 @@ func TestCLI_translateFile(t *testing.T) {
 		},
 	}
 
-	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	cl := NewCLI(outStream, errStream, inputStream, mockTranslator)
+	outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
+	cl := NewCLI(outStream, errStream, tmpFile, mockTranslator)
 
-	err = cl.TranslateFile(ctx, tmpFile.Name(), "", "test", 1000)
+	err = cl.MultiRequest(ctx, "", "test", 1000)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
