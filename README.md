@@ -2,9 +2,74 @@
 
 🍱
 
-benri translator and optimizer
+bento is a CLI tool that uses OpenAI's API to assist with everyday tasks. It is especially useful for suggesting Git branch names, commit messages, and translating text.
 
-## Example
+## Features
+
+- Uses **OpenAI's API** to assist with tasks.
+- Easy-to-use commands: `-branch`, `-commit`, `-translate`.
+- Supports **multi mode** and **single mode**:
+  - `-branch` and `-commit` use `single` mode automatically.
+  - `-translate` uses `multi` mode automatically.
+
+## Multi Mode vs Single Mode
+
+* **Single Mode**: Sends one request to the API. Used for `-branch` and `-commit`.
+* **Multi Mode**: Sends multiple requests to the API. Used for `-translate`.
+
+## Usage
+
+```
+Usage of bento:
+  -branch
+        Suggest branch name
+  -commit
+        Suggest commit message
+  -file string
+        specify a target file
+  -h    Print help information and quit
+  -help
+        Print help information and quit
+  -language string
+        Translate to language (default: en) (default "en")
+  -limit int
+        Limit the number of characters to translate (default 4000)
+  -model string
+        Use model (gpt-3.5-turbo, gpt-4-turbo and gpt-4o etc (default: gpt-3.5-turbo)) (default "gpt-3.5-turbo")
+  -multi
+        Multi mode
+  -prompt string
+        Prompt text
+  -single
+        Single mode
+  -translate
+        Translate text
+  -version
+        Print version information and quit
+```
+
+## Installation
+
+## Additional Information
+
+- **API Token**: The API token is passed via the environment variable `OPENAI_API_KEY`.
+- **Customization**: To customize, use `-multi` or `-single` and provide a custom prompt with `-prompt`.
+- **Default Model**: The default model is `gpt-3.5-turbo`, but you can change it with the `-model` option.
+- **Translation**: The `-translate` command translates to English by default; use `-language` to specify the target language.
+- **File Handling**: To work with files, provide the filename with `-file` or use standard input.
+- **Branch Prompt**: The prompt for `-branch` is `Generate a branch name directly from the provided source code differences without any additional text or formatting:`.
+  - If providing a custom prompt, it is recommended to add `"without any additional text or formatting"` at the end.
+
+## Using `-branch` and `-commit`
+
+- **`-branch`**: Use this when you haven't created a branch yet. It suggests a branch name based on the current Git diff.
+  - Large new files can be problematic for the API to handle. By default, Git diff excludes new files, which is convenient. If necessary, add new files with `git add -N`.
+- **`-commit`**: Use this when you are ready to commit. It suggests a commit message based on the staged files.
+  - If new files cause large diffs, generate the commit message before staging them to avoid exceeding API limits.
+
+### Example
+
+Here is an example of setting up bento as a Git alias. This allows you to generate branch names and commit messages from Git diffs automatically.
 
 ```.gitconfig
 [alias]
