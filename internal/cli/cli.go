@@ -113,12 +113,15 @@ func (c *CLI) Run(args []string) int {
 
 	if branchSuggestion {
 		isSingleMode = true
+		isMultiMode = false
 		prompt = "Generate a branch name directly from the provided source code differences without any additional text or formatting:\n\n"
 	} else if commitMessage {
 		isSingleMode = true
+		isMultiMode = false
 		prompt = "Generate a commit message directly from the provided source code differences without any additional text or formatting within 72 characters:\n\n"
 	} else if translate {
 		isMultiMode = true
+		isSingleMode = false
 		prompt = "Translate the following text to " + language + " without any additional text or formatting:\n\n"
 	}
 
