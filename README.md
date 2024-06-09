@@ -85,7 +85,7 @@ If you use the `make` command to build and install the 'bento' tool, the output 
 
 ### Example
 
-Here is an example of setting up bento as a Git alias. This allows you to generate branch names and commit messages from Git diffs automatically.
+Here is an example of setting up bento as a Git alias on `~/.gitconfig`. This allows you to generate branch names and commit messages from Git diffs automatically.
 
 ```.gitconfig
 [alias]
