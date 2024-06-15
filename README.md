@@ -44,13 +44,6 @@ If you use the `make` command to build and install the 'bento' tool, the output 
 - **Translation**: The `-translate` command translates to English by default; use `-language` to specify the target language.
 - **File Handling**: To work with files, provide the filename with `-file` or use standard input.
 
-## Using `-branch` and `-commit`
-
-- **`-branch`**: Use this when you haven't created a branch yet. It suggests a branch name based on the current Git diff.
-  - Large new files can be problematic for the API to handle. By default, Git diff excludes new files, which is convenient. If necessary, add new files with `git add -N`.
-- **`-commit`**: Use this when you are ready to commit. It suggests a commit message based on the staged files.
-  - If new files cause large diffs, generate the commit message before staging them to avoid exceeding API limits.
-
 ## Usage Examples
 
 ```
@@ -83,6 +76,11 @@ Usage of bento:
 ```
 
 ### Using `-branch` and `-commit`
+
+- **`-branch`**: Use this when you haven't created a branch yet. It suggests a branch name based on the current Git diff.
+  - Large new files can be problematic for the API to handle. By default, Git diff excludes new files, which is convenient. If necessary, add new files with `git add -N`.
+- **`-commit`**: Use this when you are ready to commit. It suggests a commit message based on the staged files.
+  - If new files cause large diffs, generate the commit message before staging them to avoid exceeding API limits.
 
 Here is an example of setting up bento as a Git alias on `~/.gitconfig`. This allows you to generate branch names and commit messages from Git diffs automatically.
 
