@@ -13,7 +13,7 @@ import (
 
 func TestRun_versionFlg(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	cl := NewCLI(outStream, errStream, inputStream, nil)
+	cl := NewCLI(outStream, errStream, inputStream, nil, false)
 
 	args := strings.Split("bento -version", " ")
 	status := cl.Run(args)
@@ -30,7 +30,7 @@ func TestRun_versionFlg(t *testing.T) {
 
 func TestRun_helpSuccess(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	cl := NewCLI(outStream, errStream, inputStream, nil)
+	cl := NewCLI(outStream, errStream, inputStream, nil, false)
 
 	args := strings.Split("bento -help", " ")
 	status := cl.Run(args)
@@ -47,7 +47,7 @@ func TestRun_helpSuccess(t *testing.T) {
 
 func TestRun_hSuccess(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	cl := NewCLI(outStream, errStream, inputStream, nil)
+	cl := NewCLI(outStream, errStream, inputStream, nil, false)
 
 	args := strings.Split("bento -h", " ")
 	status := cl.Run(args)
@@ -78,7 +78,7 @@ func TestCLI_translateFile(t *testing.T) {
 	}
 
 	outStream, errStream := new(bytes.Buffer), new(bytes.Buffer)
-	cl := NewCLI(outStream, errStream, tmpFile, mockTranslator)
+	cl := NewCLI(outStream, errStream, tmpFile, mockTranslator, false)
 
 	err = cl.MultiRequest(ctx, "", "test", 1000)
 	if err != nil {
