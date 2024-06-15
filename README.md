@@ -18,39 +18,7 @@ The name "bento" stands for **Benri Translator and Optimizer**. The word "benri"
 
 In Japanese, "bento" refers to a lunch box that contains a variety of different dishes. This analogy is perfect for our tool because it combines multiple functionalities into one compact tool, much like a bento box 🍱 that offers a variety of foods in one compact container. Thus, our "bento" tool is designed to be a versatile and efficient assistant in your workflow, packing numerous features in an organized manner.
 
-## Usage
-
-```
-Usage of bento:
-  -branch
-        Suggest branch name
-  -commit
-        Suggest commit message
-  -file string
-        specify a target file
-  -h    Print help information and quit
-  -help
-        Print help information and quit
-  -language string
-        Translate to language (default: en) (default "en")
-  -limit int
-        Limit the number of characters to translate (default 4000)
-  -model string
-        Use model (gpt-3.5-turbo, gpt-4-turbo and gpt-4o etc (default: gpt-3.5-turbo)) (default "gpt-3.5-turbo")
-  -multi
-        Multi mode
-  -prompt string
-        Prompt text
-  -single
-        Single mode
-  -translate
-        Translate text
-  -version
-        Print version information and quit
-```
-
 ## Installation
-
 
 It is recommended that you use the binaries available on [GitHub Releases](https://github.com/catatsuy/bento/releases). It is advisable to download and use the latest version.
 
@@ -83,7 +51,38 @@ If you use the `make` command to build and install the 'bento' tool, the output 
 - **`-commit`**: Use this when you are ready to commit. It suggests a commit message based on the staged files.
   - If new files cause large diffs, generate the commit message before staging them to avoid exceeding API limits.
 
-### Example
+## Usage Examples
+
+```
+Usage of bento:
+  -branch
+        Suggest branch name
+  -commit
+        Suggest commit message
+  -file string
+        specify a target file
+  -h    Print help information and quit
+  -help
+        Print help information and quit
+  -language string
+        Translate to language (default: en)
+  -limit int
+        Limit the number of characters to translate (default 4000)
+  -model string
+        Use model (gpt-3.5-turbo, gpt-4-turbo and gpt-4o etc (default: gpt-3.5-turbo)) (default "gpt-3.5-turbo")
+  -multi
+        Multi mode
+  -prompt string
+        Prompt text
+  -single
+        Single mode
+  -translate
+        Translate text
+  -version
+        Print version information and quit
+```
+
+### Using `-branch` and `-commit`
 
 Here is an example of setting up bento as a Git alias on `~/.gitconfig`. This allows you to generate branch names and commit messages from Git diffs automatically.
 
@@ -97,6 +96,44 @@ To show new files in git diff, use the `git add -N` command. This stages the new
 
 ```bash
 git add -N .
+```
+
+### Using `-translate`
+
+The `-translate` option allows you to translate text to a target language. You can specify the target language using the `-language` option. By default, the target language is English (`en`).
+
+#### Translating Text from a File
+
+To translate text from a file named `example.txt` to Japanese, use the following command:
+
+```sh
+bento -translate -file example.txt -language ja
+```
+
+#### Translating Text from Standard Input
+
+To translate text from standard input to French, use the following command.
+
+```sh
+echo 'hello' | bento -translate -language fr
+```
+
+### Using Multi Mode with `-multi`
+
+To proofread a text and correct obvious errors while maintaining the original meaning and tone, use the following command:
+
+```sh
+bento -file textfile.txt -multi -prompt "Please correct only the obvious errors in the following text while maintaining the original meaning and tone as much as possible:\n\n"
+```
+
+### Using Single Mode with `-single`
+
+The `-single` option is used when you need to send a single request to the API. This is useful for tasks that must be processed as a whole.
+
+To summarize text from a file named example.txt, use the following command:
+
+```sh
+bento -single -prompt 'Please summarize the following text:\n\n' -file example.txt
 ```
 
 ## Tips
