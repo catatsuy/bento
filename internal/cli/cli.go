@@ -99,12 +99,12 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	if version {
-		fmt.Fprintf(c.errStream, "bento version %s; %s\n", Version, runtime.Version())
+		fmt.Fprintf(c.errStream, "bento version %s; %s\n", c.appVersion, runtime.Version())
 		return ExitCodeOK
 	}
 
 	if help {
-		fmt.Fprintf(c.errStream, "bento version %s; %s\n", Version, runtime.Version())
+		fmt.Fprintf(c.errStream, "bento version %s; %s\n", c.appVersion, runtime.Version())
 		fmt.Fprintf(c.errStream, "Usage of bento:\n")
 		flags.PrintDefaults()
 		return ExitCodeOK
