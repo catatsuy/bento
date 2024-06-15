@@ -31,6 +31,8 @@ type CLI struct {
 	outStream, errStream io.Writer
 	inputStream          io.Reader
 
+	isStdinTerminal bool
+
 	appVersion string
 
 	translator Translator
@@ -40,8 +42,8 @@ type Translator interface {
 	request(ctx context.Context, prompt, input, model string) (string, error)
 }
 
-func NewCLI(outStream, errStream io.Writer, inputStream io.Reader, tr Translator) *CLI {
-	return &CLI{appVersion: version(), outStream: outStream, errStream: errStream, inputStream: inputStream, translator: tr}
+func NewCLI(outStream, errStream io.Writer, inputStream io.Reader, tr Translator, isStdinTerminal bool) *CLI {
+	return &CLI{appVersion: version(), outStream: outStream, errStream: errStream, inputStream: inputStream, translator: tr, isStdinTerminal: isStdinTerminal}
 }
 
 func (c *CLI) Run(args []string) int {
@@ -123,6 +125,16 @@ func (c *CLI) Run(args []string) int {
 
 	if (isMultiMode || isSingleMode) && prompt == "" {
 		fmt.Fprintf(c.errStream, "Error: The '-prompt' option is required in multi or single mode. Please specify '-prompt'.\n")
+		return ExitCodeFail
+	}
+
+	if c.isStdinTerminal && targetFile == "" {
+		fmt.Fprintf(c.errStream, "Error: The '-file' option is required when reading from standard input. Please specify '-file'.\n")
+		return ExitCodeFail
+	}
+
+	if !c.isStdinTerminal && targetFile != "" {
+		fmt.Fprintf(c.errStream, "Error: The '-file' option cannot be used when reading from a file. Please remove '-file'.\n")
 		return ExitCodeFail
 	}
 
