@@ -1,13 +1,13 @@
-project_name: purl
+project_name: bento
 before:
   hooks:
     - go mod tidy
 builds:
   - main: ./main.go
-    binary: purl
+    binary: bento
     ldflags:
       - -s -w
-      - -X github.com/catatsuy/purl/internal/cli.Version=v{{.Version}}
+      - -X github.com/catatsuy/bento/internal/cli.Version=v{{.Version}}
     env:
       - CGO_ENABLED=0
     goos:
