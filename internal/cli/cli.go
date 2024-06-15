@@ -86,7 +86,7 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&isMultiMode, "multi", false, "Multi mode")
 	flags.BoolVar(&isSingleMode, "single", false, "Single mode")
 
-	flags.StringVar(&language, "language", "en", "Translate to language (default: en)")
+	flags.StringVar(&language, "language", "", "Translate to language (default: en)")
 	flags.StringVar(&prompt, "prompt", "", "Prompt text")
 	flags.StringVar(&useModel, "model", "gpt-3.5-turbo", "Use model (gpt-3.5-turbo, gpt-4-turbo and gpt-4o etc (default: gpt-3.5-turbo))")
 
@@ -111,6 +111,21 @@ func (c *CLI) Run(args []string) int {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
+	if isSingleMode && isMultiMode {
+		fmt.Fprintf(c.errStream, "Error: The '-single' and '-multi' options cannot be used together. Please specify only one of these options.\n")
+		return ExitCodeFail
+	}
+
+	if !translate && language != "" {
+		fmt.Fprintf(c.errStream, "Error: The '-language' option can only be used with the '-translate' option. Please specify '-translate' to use '-language'.\n")
+		return ExitCodeFail
+	}
+
+	if (isMultiMode || isSingleMode) && prompt == "" {
+		fmt.Fprintf(c.errStream, "Error: The '-prompt' option is required in multi or single mode. Please specify '-prompt'.\n")
+		return ExitCodeFail
+	}
+
 	if branchSuggestion {
 		isSingleMode = true
 		isMultiMode = false
@@ -120,14 +135,12 @@ func (c *CLI) Run(args []string) int {
 		isMultiMode = false
 		prompt = "Generate a commit message directly from the provided source code differences without any additional text or formatting within 72 characters:\n\n"
 	} else if translate {
+		if language == "" {
+			language = "en"
+		}
 		isMultiMode = true
 		isSingleMode = false
 		prompt = "Translate the following text to " + language + " without any additional text or formatting:\n\n"
-	}
-
-	if !isSingleMode && !isMultiMode {
-		fmt.Fprintf(c.errStream, "Error: no mode specified\n")
-		return ExitCodeFail
 	}
 
 	if targetFile != "" {
