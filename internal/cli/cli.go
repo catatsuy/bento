@@ -90,7 +90,7 @@ func (c *CLI) Run(args []string) int {
 
 	flags.StringVar(&language, "language", "", "Translate to language (default: en)")
 	flags.StringVar(&prompt, "prompt", "", "Prompt text")
-	flags.StringVar(&useModel, "model", "gpt-3.5-turbo", "Use model (gpt-3.5-turbo, gpt-4-turbo and gpt-4o etc (default: gpt-3.5-turbo))")
+	flags.StringVar(&useModel, "model", "gpt-3.5-turbo", "Use models such as gpt-3.5-turbo, gpt-4-turbo, and gpt-4o")
 
 	err := flags.Parse(args[1:])
 	if err != nil {
