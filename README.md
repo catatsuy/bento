@@ -62,7 +62,7 @@ Usage of bento:
   -limit int
         Limit the number of characters to translate (default 4000)
   -model string
-        Use model (gpt-3.5-turbo, gpt-4-turbo and gpt-4o etc (default: gpt-3.5-turbo)) (default "gpt-3.5-turbo")
+        Use models such as gpt-3.5-turbo, gpt-4-turbo, and gpt-4o (default "gpt-3.5-turbo")
   -multi
         Multi mode
   -prompt string
