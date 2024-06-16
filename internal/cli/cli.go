@@ -210,13 +210,16 @@ func version() string {
 func (c *CLI) multiRequest(ctx context.Context, prompt, useModel string, limit int) error {
 	var b strings.Builder
 
-	scanner := bufio.NewScanner(c.inputStream)
-	for scanner.Scan() {
-		text := strings.TrimSpace(scanner.Text())
-		if len(text) == 0 {
-			continue
+	reader := bufio.NewReader(c.inputStream)
+	for {
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return fmt.Errorf("error reading input: %w", err)
 		}
-		b.WriteString(text + "\n")
+		b.Write(line)
 
 		if b.Len() > limit {
 			translatedText, err := c.translator.request(ctx, prompt, b.String(), useModel)
@@ -228,10 +231,6 @@ func (c *CLI) multiRequest(ctx context.Context, prompt, useModel string, limit i
 
 			b.Reset()
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("failed to scan file: %w", err)
 	}
 
 	if b.Len() > 0 {
