@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 )
 
@@ -19,6 +18,7 @@ var (
 type Client struct {
 	URL        *url.URL
 	HTTPClient *http.Client
+	APIKey     string
 }
 
 type Payload struct {
@@ -52,9 +52,13 @@ type Usage struct {
 	TotalTokens      int `json:"total_tokens"`
 }
 
-func NewClient(urlStr string) (*Client, error) {
+func NewClient(urlStr, apiKey string) (*Client, error) {
 	if len(urlStr) == 0 {
 		return nil, fmt.Errorf("client: missing url")
+	}
+
+	if len(apiKey) == 0 {
+		return nil, fmt.Errorf("client: missing api key")
 	}
 
 	parsedURL, err := url.ParseRequestURI(urlStr)
@@ -65,6 +69,7 @@ func NewClient(urlStr string) (*Client, error) {
 	client := &Client{
 		URL:        parsedURL,
 		HTTPClient: &http.Client{Timeout: 30 * time.Second},
+		APIKey:     apiKey,
 	}
 
 	return client, nil
@@ -95,8 +100,7 @@ func (c *Client) Chat(ctx context.Context, param *Payload) (*Response, error) {
 		return nil, err
 	}
 
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := c.HTTPClient.Do(req)
