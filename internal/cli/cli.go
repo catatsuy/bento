@@ -253,8 +253,8 @@ type translator struct {
 	client *openai.Client
 }
 
-func NewTranslator() (*translator, error) {
-	client, err := openai.NewClient(openai.OpenAIAPIURL)
+func NewTranslator(apiKey string) (*translator, error) {
+	client, err := openai.NewClient(openai.OpenAIAPIURL, apiKey)
 	if err != nil {
 		return nil, fmt.Errorf("NewClient: %w", err)
 	}

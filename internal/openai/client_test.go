@@ -29,11 +29,19 @@ func TestPostText_Success(t *testing.T) {
 		},
 	}
 
+	token := "token"
+
 	muxAPI.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		contentType := r.Header.Get("Content-Type")
 		expectedType := "application/json"
 		if contentType != expectedType {
 			t.Fatalf("Content-Type expected %s, but %s", expectedType, contentType)
+		}
+
+		authorization := r.Header.Get("Authorization")
+		expectedAuth := "Bearer " + token
+		if authorization != expectedAuth {
+			t.Fatalf("Authorization expected %s, but %s", expectedAuth, authorization)
 		}
 
 		bodyBytes, err := io.ReadAll(r.Body)
@@ -55,7 +63,7 @@ func TestPostText_Success(t *testing.T) {
 		http.ServeFile(w, r, "testdata/chat_ok.json")
 	})
 
-	c, err := NewClient(testAPIServer.URL)
+	c, err := NewClient(testAPIServer.URL, token)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +120,7 @@ func TestPostText_Fail(t *testing.T) {
 		http.ServeFile(w, r, "testdata/chat_fail.json")
 	})
 
-	c, err := NewClient(testAPIServer.URL)
+	c, err := NewClient(testAPIServer.URL, "token")
 	if err != nil {
 		t.Fatal(err)
 	}
