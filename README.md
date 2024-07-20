@@ -40,7 +40,7 @@ If you use the `make` command to build and install the 'bento' tool, the output 
 
 - **API Token**: The API token is passed via the environment variable `OPENAI_API_KEY`.
 - **Customization**: To customize, use `-multi` or `-single` and provide a custom prompt with `-prompt`.
-- **Default Model**: The default model is `gpt-3.5-turbo`, but you can change it with the `-model` option.
+- **Default Model**: The default model is `gpt-4o-mini`, but you can change it with the `-model` option.
 - **Translation**: The `-translate` command translates to English by default; use `-language` to specify the target language.
 - **File Handling**: To work with files, provide the filename with `-file` or use standard input.
 
@@ -62,7 +62,7 @@ Usage of bento:
   -limit int
         Limit the number of characters to translate (default 4000)
   -model string
-        Use models such as gpt-3.5-turbo, gpt-4-turbo, and gpt-4o (default "gpt-3.5-turbo")
+        Use models such as gpt-4o-mini, gpt-4-turbo, and gpt-4o (default "gpt-4o-mini")
   -multi
         Multi mode
   -prompt string
@@ -86,8 +86,8 @@ Here is an example of setting up bento as a Git alias on `~/.gitconfig`. This al
 
 ```.gitconfig
 [alias]
-sb = !git diff -w | bento -branch -model "gpt-4o"
-sc = !git diff -w --staged | bento -commit -model "gpt-4o"
+sb = !git diff -w | bento -branch
+sc = !git diff -w --staged | bento -commit
 ```
 
 To show new files in git diff, use the `git add -N` command. This stages the new files without adding content.
