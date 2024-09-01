@@ -46,8 +46,10 @@ func NewCLI(outStream, errStream io.Writer, inputStream io.Reader, tr Translator
 	return &CLI{appVersion: version(), outStream: outStream, errStream: errStream, inputStream: inputStream, translator: tr, isStdinTerminal: isStdinTerminal}
 }
 
+// Run parses the CLI arguments and executes the appropriate functionality based on the provided flags.
 func (c *CLI) Run(args []string) int {
 	if len(args) <= 1 {
+		fmt.Fprintf(c.errStream, "Error: Insufficient arguments provided\n")
 		return ExitCodeFail
 	}
 
