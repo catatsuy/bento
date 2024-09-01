@@ -39,7 +39,7 @@ type CLI struct {
 }
 
 type Translator interface {
-	request(ctx context.Context, prompt, input, model string) (string, error)
+	request(ctx context.Context, systemPrompt, prompt, input, model string) (string, error)
 }
 
 func NewCLI(outStream, errStream io.Writer, inputStream io.Reader, tr Translator, isStdinTerminal bool) *CLI {
@@ -59,10 +59,11 @@ func (c *CLI) Run(args []string) int {
 		commitMessage    bool
 		translate        bool
 
-		language   string
-		prompt     string
-		useModel   string
-		targetFile string
+		language     string
+		prompt       string
+		systemPrompt string
+		useModel     string
+		targetFile   string
 
 		isMultiMode  bool
 		isSingleMode bool
@@ -90,6 +91,7 @@ func (c *CLI) Run(args []string) int {
 
 	flags.StringVar(&language, "language", "", "Translate to language (default: en)")
 	flags.StringVar(&prompt, "prompt", "", "Prompt text")
+	flags.StringVar(&systemPrompt, "system", "", "System prompt text")
 	flags.StringVar(&useModel, "model", "gpt-4o-mini", "Use models such as gpt-4o-mini, gpt-4-turbo, and gpt-4o")
 
 	err := flags.Parse(args[1:])
@@ -172,7 +174,7 @@ func (c *CLI) Run(args []string) int {
 			return ExitCodeFail
 		}
 
-		suggestion, err := c.translator.request(ctx, prompt, string(by), useModel)
+		suggestion, err := c.translator.request(ctx, systemPrompt, prompt, string(by), useModel)
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
@@ -184,7 +186,7 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	if isMultiMode {
-		err = c.multiRequest(ctx, prompt, useModel, limit)
+		err = c.multiRequest(ctx, systemPrompt, prompt, useModel, limit)
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
@@ -207,7 +209,7 @@ func version() string {
 	return info.Main.Version
 }
 
-func (c *CLI) multiRequest(ctx context.Context, prompt, useModel string, limit int) error {
+func (c *CLI) multiRequest(ctx context.Context, systemPrompt, prompt, useModel string, limit int) error {
 	var b strings.Builder
 
 	reader := bufio.NewReader(c.inputStream)
@@ -222,7 +224,7 @@ func (c *CLI) multiRequest(ctx context.Context, prompt, useModel string, limit i
 		b.Write(line)
 
 		if b.Len() > limit {
-			translatedText, err := c.translator.request(ctx, prompt, b.String(), useModel)
+			translatedText, err := c.translator.request(ctx, systemPrompt, prompt, b.String(), useModel)
 			if err != nil {
 				return fmt.Errorf("failed to translate text: %w", err)
 			}
@@ -234,7 +236,7 @@ func (c *CLI) multiRequest(ctx context.Context, prompt, useModel string, limit i
 	}
 
 	if b.Len() > 0 {
-		translatedText, err := c.translator.request(ctx, prompt, b.String(), useModel)
+		translatedText, err := c.translator.request(ctx, systemPrompt, prompt, b.String(), useModel)
 		if err != nil {
 			return fmt.Errorf("failed to translate text: %w", err)
 		}
@@ -263,19 +265,37 @@ func NewTranslator(apiKey string) (*translator, error) {
 	}, nil
 }
 
-func (tr *translator) request(ctx context.Context, prompt, input, useModel string) (string, error) {
+func (tr *translator) request(ctx context.Context, systemPrompt, prompt, input, useModel string) (string, error) {
 	if len(input) == 0 {
 		return "", fmt.Errorf("no input")
 	}
 
-	data := &openai.Payload{
-		Model: useModel,
-		Messages: []openai.Message{
-			{
-				Role:    "user",
-				Content: prompt + input,
+	var data *openai.Payload
+
+	if len(systemPrompt) > 0 {
+		data = &openai.Payload{
+			Model: useModel,
+			Messages: []openai.Message{
+				{
+					Role:    "system",
+					Content: systemPrompt,
+				},
+				{
+					Role:    "user",
+					Content: prompt + input,
+				},
 			},
-		},
+		}
+	} else {
+		data = &openai.Payload{
+			Model: useModel,
+			Messages: []openai.Message{
+				{
+					Role:    "user",
+					Content: prompt + input,
+				},
+			},
+		}
 	}
 
 	resp, err := tr.client.Chat(ctx, data)
