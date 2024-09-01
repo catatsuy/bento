@@ -1,0 +1,79 @@
+name: Auto Review
+
+on:
+  pull_request:
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download bento
+        run: |
+          curl -sL https://github.com/catatsuy/bento/releases/latest/download/bento-linux-amd64.tar.gz | tar xz -C /tmp
+          sudo mv /tmp/bento /usr/local/bin/
+
+      - name: Check for diffs and set SKIP_REVIEW
+        run: |
+          DIFF_OUTPUT=$(git diff origin/main...HEAD)
+          DIFF_LINES=$(echo "$DIFF_OUTPUT" | wc -l)
+          if [ -z "$DIFF_OUTPUT" ]; then
+            echo "No changes detected, skipping review."
+            echo "SKIP_REVIEW=true" >> $GITHUB_ENV
+            exit 0
+          elif [ "$DIFF_LINES" -gt 500 ]; then
+            echo "Diff too large ($DIFF_LINES lines), skipping review."
+            echo "SKIP_REVIEW=true" >> $GITHUB_ENV
+            exit 0
+          fi
+
+      - name: Run Review
+        if: env.SKIP_REVIEW != 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          git diff origin/main...HEAD | bento -review > review.txt
+          REVIEW_CONTENT=$(cat review.txt)
+          echo "REVIEW_CONTENT<<EOF" >> $GITHUB_ENV
+          echo "$REVIEW_CONTENT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Find Existing Comment
+        if: env.SKIP_REVIEW != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+            --jq '.[] | select(.user.login == "github-actions[bot]") | select(.body | contains("Automatic Review")) | .id' \
+            > comment_id.txt
+          if [ -s comment_id.txt ]; then
+            echo "comment_id=$(cat comment_id.txt)" >> $GITHUB_ENV
+          fi
+
+      - name: Post Review as a Comment
+        if: env.SKIP_REVIEW != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REVIEW_BODY=$(printf "### Automatic Review\n\n%s" "${{ env.REVIEW_CONTENT }}")
+          if [ -n "${{ env.comment_id }}" ]; then
+            # Update existing comment
+            gh api \
+              -X PATCH \
+              repos/${{ github.repository }}/issues/comments/${{ env.comment_id }} \
+              -f body="${REVIEW_BODY}"
+          else
+            # Create a new comment
+            gh api \
+              -X POST \
+              repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+              -f body="${REVIEW_BODY}"
+          fi
