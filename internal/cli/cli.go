@@ -58,6 +58,7 @@ func (c *CLI) Run(args []string) int {
 		branchSuggestion bool
 		commitMessage    bool
 		translate        bool
+		review           bool
 
 		language     string
 		prompt       string
@@ -83,6 +84,7 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&branchSuggestion, "branch", false, "Suggest branch name")
 	flags.BoolVar(&commitMessage, "commit", false, "Suggest commit message")
 	flags.BoolVar(&translate, "translate", false, "Translate text")
+	flags.BoolVar(&review, "review", false, "Review source code")
 
 	flags.IntVar(&limit, "limit", DefaultExceedThreshold, "Limit the number of characters to translate")
 
@@ -120,8 +122,8 @@ func (c *CLI) Run(args []string) int {
 		return ExitCodeFail
 	}
 
-	if !translate && language != "" {
-		fmt.Fprintf(c.errStream, "Error: The '-language' option can only be used with the '-translate' option. Please specify '-translate' to use '-language'.\n")
+	if (!translate && !review) && language != "" {
+		fmt.Fprintf(c.errStream, "Error: The '-language' option can only be used with the '-translate' or '-review' option. Please specify one of these options to use '-language'.\n")
 		return ExitCodeFail
 	}
 
@@ -155,6 +157,16 @@ func (c *CLI) Run(args []string) int {
 		isMultiMode = true
 		isSingleMode = false
 		prompt = "Translate the following text to " + language + " without any additional text or formatting:\n\n"
+	} else if review {
+		isSingleMode = true
+		isMultiMode = false
+		prompt = `Please review the following code as an experienced engineer, focusing only on areas where there are issues. Provide feedback only if there is a problem in any of the following aspects: Completeness, Bugs, Security, Code Style, Performance, Readability, Documentation, Testing, Scalability, Dependencies, or Error Handling.
+
+If you find a problem, briefly explain the issue and provide a specific suggestion for improvement. When possible, include a code example that demonstrates how to fix the issue. If there are no issues in a particular area, you do not need to mention it. Avoid numbering the feedback items.`
+
+		if language != "" {
+			prompt += " Please provide the feedback in " + language + ".\n\n"
+		}
 	}
 
 	if targetFile != "" {
