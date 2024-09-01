@@ -162,13 +162,16 @@ func (c *CLI) Run(args []string) int {
 	} else if review {
 		isSingleMode = true
 		isMultiMode = false
-		prompt = `Please review the following code as an experienced engineer, focusing only on areas where there are issues. Provide feedback only if there is a problem in any of the following aspects: Completeness, Bugs, Security, Code Style, Performance, Readability, Documentation, Testing, Scalability, Dependencies, or Error Handling.
 
+		prompt = `Please review the following code as an experienced engineer, focusing only on areas where there are issues. The code is provided as a Git diff, where lines prefixed with + represent additions and lines prefixed with - represent deletions. Analyze the changes accordingly.
+Provide feedback only if there is a problem in any of the following aspects: Completeness, Bugs, Security, Code Style, Performance, Readability, Documentation, Testing, Scalability, Dependencies, or Error Handling.
 If you find a problem, briefly explain the issue and provide a specific suggestion for improvement. When possible, include a code example that demonstrates how to fix the issue. If there are no issues in a particular area, you do not need to mention it. Avoid numbering the feedback items.`
 
 		if language != "" {
-			prompt += " Please provide the feedback in " + language + ".\n\n"
+			prompt += " Please provide the feedback in " + language + "."
 		}
+
+		prompt += "\n\n"
 	}
 
 	if targetFile != "" {
