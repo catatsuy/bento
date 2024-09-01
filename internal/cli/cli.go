@@ -91,7 +91,7 @@ func (c *CLI) Run(args []string) int {
 	flags.IntVar(&limit, "limit", DefaultExceedThreshold, "Limit the number of characters to translate")
 
 	flags.BoolVar(&isMultiMode, "multi", false, "Multi mode")
-	flags.BoolVar(&isSingleMode, "single", false, "Single mode")
+	flags.BoolVar(&isSingleMode, "single", false, "Single mode (default)")
 
 	flags.StringVar(&language, "language", "", "Translate to language (default: en)")
 	flags.StringVar(&prompt, "prompt", "", "Prompt text")
@@ -120,8 +120,13 @@ func (c *CLI) Run(args []string) int {
 	defer stop()
 
 	if isSingleMode && isMultiMode {
-		fmt.Fprintf(c.errStream, "Error: The '-single' and '-multi' options cannot be used together. Please specify only one of these options.\n")
+		fmt.Fprintf(c.errStream, "Error: Both 'multi' and 'single' modes cannot be specified simultaneously.\n")
 		return ExitCodeFail
+	}
+
+	if !isMultiMode && !isSingleMode {
+		// Default to single mode if no mode is specified
+		isSingleMode = true
 	}
 
 	if (!translate && !review) && language != "" {
