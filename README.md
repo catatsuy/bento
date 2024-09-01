@@ -67,8 +67,12 @@ Usage of bento:
         Multi mode
   -prompt string
         Prompt text
+  -review
+        Review source code
   -single
-        Single mode
+        Single mode (default)
+  -system string
+        System prompt text
   -translate
         Translate text
   -version
@@ -95,6 +99,20 @@ To show new files in git diff, use the `git add -N` command. This stages the new
 ```bash
 git add -N .
 ```
+
+### Using Review Mode with `-review`
+
+The `-review` option is used when you need to review the source code. This mode focuses on identifying issues in various aspects such as Completeness, Bugs, Security, Code Style, etc.
+
+To review code from a file named source.diff, use the following command:
+
+```sh
+git diff -w | bento -review -model gpt-4o
+```
+
+### Using System Prompt with `-system`
+
+The `-system` option allows you to define a system prompt text. This can be useful for customizing the initial instructions.
 
 ### Using `-translate`
 
@@ -125,6 +143,8 @@ bento -file textfile.txt -multi -prompt "Please correct only the obvious errors 
 ```
 
 ### Using Single Mode with `-single`
+
+The Single Mode is default. You don't need to specify `-single`.
 
 The `-single` option is used when you need to send a single request to the API. This is useful for tasks that must be processed as a whole.
 
