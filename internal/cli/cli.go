@@ -180,13 +180,13 @@ If you find a problem, briefly explain the issue and provide a specific suggesti
 	}
 
 	if isSingleMode {
-		by, err := io.ReadAll(c.inputStream)
+		content, err := io.ReadAll(c.inputStream)
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
 		}
 
-		suggestion, err := c.translator.request(ctx, systemPrompt, prompt, string(by), useModel)
+		suggestion, err := c.translator.request(ctx, systemPrompt, prompt, string(content), useModel)
 		if err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
