@@ -134,11 +134,6 @@ func (c *CLI) Run(args []string) int {
 		return ExitCodeFail
 	}
 
-	if (isMultiMode || isSingleMode) && prompt == "" {
-		fmt.Fprintf(c.errStream, "Error: The '-prompt' option is required in multi or single mode. Please specify '-prompt'.\n")
-		return ExitCodeFail
-	}
-
 	if c.isStdinTerminal && targetFile == "" {
 		fmt.Fprintf(c.errStream, "Error: The '-file' option is required when reading from standard input. Please specify '-file'.\n")
 		return ExitCodeFail
