@@ -6,9 +6,6 @@ on:
 jobs:
   review:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      issues: write
 
     steps:
       - name: Checkout code
@@ -43,6 +40,7 @@ jobs:
           git diff origin/main...HEAD | bento -review > review.txt
           REVIEW_CONTENT=$(cat review.txt)
           echo "REVIEW_CONTENT<<EOF" >> $GITHUB_ENV
+          echo '### Automatic Review' >> $GITHUB_ENV
           echo "$REVIEW_CONTENT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
@@ -62,8 +60,8 @@ jobs:
         if: env.SKIP_REVIEW != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          REVIEW_BODY: ${{ env.REVIEW_CONTENT }}
         run: |
-          REVIEW_BODY=$(printf "### Automatic Review\n\n%s" "${{ env.REVIEW_CONTENT }}")
           if [ -n "${{ env.comment_id }}" ]; then
             # Update existing comment
             gh api \
