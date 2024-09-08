@@ -115,6 +115,10 @@ For automation, you can use a GitHub Actions workflow. Below is an example workf
 
 This workflow will trigger on every pull request and run a code review using the `bento` tool.
 
+#### Important Security Considerations
+
+When using GitHub Actions in an open-source project, there is a risk of exposing your OpenAI API key. To mitigate this risk, it is recommended to configure the Actions permissions settings by selecting **Allow OWNER, and select non-OWNER, actions and reusable workflows**. For more information on how to set this up, refer to the GitHub documentation [here](https://docs.github.com/github/administering-a-repository/disabling-or-limiting-github-actions-for-a-repository#allowing-select-actions-and-reusable-workflows-to-run).
+
 ### Using System Prompt with `-system`
 
 The `-system` option allows you to define a system prompt text. This can be useful for customizing the initial instructions.
