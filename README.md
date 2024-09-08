@@ -7,9 +7,9 @@ bento is a CLI tool that uses OpenAI's API to assist with everyday tasks. It is 
 ## Features
 
 - Uses **OpenAI's API** to assist with tasks.
-- Easy-to-use commands: `-branch`, `-commit`, `-translate`.
+- Easy-to-use commands: `-branch`, `-commit`, `-translate` and `-review`.
 - Supports **multi mode** and **single mode**:
-  - **Single Mode**: Sends one request to the API. Used for `-branch` and `-commit`.
+  - **Single Mode**: Sends one request to the API. Used for `-branch`, `-commit` and `-review`.
   - **Multi Mode**: Sends multiple requests to the API. Used for `-translate`.
 
 ## Name Origin of "bento" 🍱
@@ -42,6 +42,7 @@ If you use the `make` command to build and install the 'bento' tool, the output 
 - **Customization**: To customize, use `-multi` or `-single` and provide a custom prompt with `-prompt`.
 - **Default Model**: The default model is `gpt-4o-mini`, but you can change it with the `-model` option.
 - **Translation**: The `-translate` command translates to English by default; use `-language` to specify the target language.
+- **Code Review**: Use the code review feature to get feedback on your code. You can specify the language for the review using the `-language` option.
 - **File Handling**: To work with files, provide the filename with `-file` or use standard input.
 
 ## Usage Examples
@@ -104,11 +105,26 @@ git add -N .
 
 The `-review` option is used when you need to review the source code. This mode focuses on identifying issues in various aspects such as Completeness, Bugs, Security, Code Style, etc.
 
-To review code from a file named source.diff, use the following command:
+To review code, use the following command:
 
 ```sh
 git diff -w | bento -review -model gpt-4o
 ```
+
+For automation, you can use a GitHub Actions workflow. Below is an example workflow configuration file, [`.github/workflows/auto-review.yml`](/.github/workflows/auto-review.yml), which automatically runs a code review whenever there is a new pull request:
+
+This workflow will trigger on every pull request and run a code review using the `bento` tool.
+
+#### Important Security Considerations
+
+- **API Key Storage**: Store your OpenAI API key as a repository secret named `OPENAI_API_KEY`:
+  1. Go to your repository's Settings.
+  2. Navigate to Secrets and variables > Actions.
+  3. Click "New repository secret" to add the key.
+
+- **Permissions**: Set proper permissions for Actions in open-source projects:
+  1. In the repository settings, adjust the Actions permissions to "Allow OWNER, and select non-OWNER, actions and reusable workflows".
+  2. For details, refer to the GitHub documentation [here](https://docs.github.com/github/administering-a-repository/disabling-or-limiting-github-actions-for-a-repository#allowing-select-actions-and-reusable-workflows-to-run).
 
 ### Using System Prompt with `-system`
 
