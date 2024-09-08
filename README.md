@@ -117,8 +117,14 @@ This workflow will trigger on every pull request and run a code review using the
 
 #### Important Security Considerations
 
-1. API Key Storage: You must store your OpenAI API key as a repository secret named OPENAI_API_KEY. This will ensure the API key is kept secure while being accessible to the workflow. You can configure this by navigating to your repository's Settings > Secrets and variables > Actions, and adding the key under Repository secrets.
-2. Permissions: When using GitHub Actions in an open-source project, there is a risk of exposing your OpenAI API key. To mitigate this risk, configure the Actions permissions settings by selecting "Allow OWNER, and select non-OWNER, actions and reusable workflows". For more information on how to set this up, refer to the GitHub documentation [here](https://docs.github.com/github/administering-a-repository/disabling-or-limiting-github-actions-for-a-repository#allowing-select-actions-and-reusable-workflows-to-run).
+- **API Key Storage**: Store your OpenAI API key as a repository secret named `OPENAI_API_KEY`:
+  1. Go to your repository's Settings.
+  2. Navigate to Secrets and variables > Actions.
+  3. Click "New repository secret" to add the key.
+
+- **Permissions**: Set proper permissions for Actions in open-source projects:
+  1. In the repository settings, adjust the Actions permissions to "Allow OWNER, and select non-OWNER, actions and reusable workflows".
+  2. For details, refer to the GitHub documentation [here](https://docs.github.com/github/administering-a-repository/disabling-or-limiting-github-actions-for-a-repository#allowing-select-actions-and-reusable-workflows-to-run).
 
 ### Using System Prompt with `-system`
 
