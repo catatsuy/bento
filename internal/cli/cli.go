@@ -93,7 +93,7 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&isMultiMode, "multi", false, "Multi mode")
 	flags.BoolVar(&isSingleMode, "single", false, "Single mode (default)")
 
-	flags.StringVar(&language, "language", "", "Translate to language (default: en)")
+	flags.StringVar(&language, "language", "", "Specify the output language")
 	flags.StringVar(&prompt, "prompt", "", "Prompt text")
 	flags.StringVar(&systemPrompt, "system", "", "System prompt text")
 	flags.StringVar(&useModel, "model", "gpt-4o-mini", "Use models such as gpt-4o-mini, gpt-4-turbo, and gpt-4o")

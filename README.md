@@ -59,7 +59,7 @@ Usage of bento:
   -help
         Print help information and quit
   -language string
-        Translate to language (default: en)
+        Specify the output language
   -limit int
         Limit the number of characters to translate (default 4000)
   -model string
@@ -105,11 +105,15 @@ git add -N .
 
 The `-review` option is used when you need to review the source code. This mode focuses on identifying issues in various aspects such as Completeness, Bugs, Security, Code Style, etc.
 
+You can also use the `-language` option to specify the output language of the review results.
+
 To review code, use the following command:
 
 ```sh
-git diff -w | bento -review -model gpt-4o
+git diff -w | bento -review -model gpt-4o -language Japanese
 ```
+
+In this example, the review results will be in Japanese. You can change the output language by specifying a different language with `-language`.
 
 For automation, you can use a GitHub Actions workflow. Below is an example workflow configuration file, [`.github/workflows/auto-review.yml`](/.github/workflows/auto-review.yml), which automatically runs a code review whenever there is a new pull request:
 
