@@ -61,12 +61,14 @@ func (c *CLI) Run(args []string) int {
 		commitMessage    bool
 		translate        bool
 		review           bool
+		dump             bool
 
 		language     string
 		prompt       string
 		systemPrompt string
 		useModel     string
 		targetFile   string
+		repoPath     string
 
 		isMultiMode  bool
 		isSingleMode bool
@@ -87,6 +89,7 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&commitMessage, "commit", false, "Suggest commit message")
 	flags.BoolVar(&translate, "translate", false, "Translate text")
 	flags.BoolVar(&review, "review", false, "Review source code")
+	flags.BoolVar(&dump, "dump", false, "Dump repository contents")
 
 	flags.IntVar(&limit, "limit", DefaultExceedThreshold, "Limit the number of characters to translate")
 
@@ -132,6 +135,32 @@ func (c *CLI) Run(args []string) int {
 	if (!translate && !review) && language != "" {
 		fmt.Fprintf(c.errStream, "Error: The '-language' option can only be used with the '-translate' or '-review' option. Please specify one of these options to use '-language'.\n")
 		return ExitCodeFail
+	}
+
+	if !dump {
+		if c.translator == nil {
+			fmt.Fprintf(c.errStream, "you need to set OPENAI_API_KEY\n")
+			return ExitCodeFail
+		}
+	}
+
+	if dump {
+		if flags.NArg() < 1 {
+			repoPath, err = os.Getwd()
+			if err != nil {
+				fmt.Fprintf(c.errStream, "Error: A repository path must be specified for dump mode.\n")
+				return ExitCodeFail
+			}
+		} else {
+			repoPath = flags.Arg(0)
+		}
+
+		if err := c.RunDump(repoPath); err != nil {
+			fmt.Fprintf(c.errStream, "Error: %v\n", err)
+			return ExitCodeFail
+		}
+
+		return ExitCodeOK
 	}
 
 	if c.isStdinTerminal && targetFile == "" {

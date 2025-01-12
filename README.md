@@ -1,15 +1,15 @@
 # bento
 
 🍱
-
-bento is a CLI tool that uses OpenAI's API to assist with everyday tasks. It is especially useful for suggesting Git branch names, commit messages, and translating text.
+bento is a CLI tool that uses OpenAI's API to assist with everyday tasks. It is especially useful for suggesting Git branch names, commit messages, translating text, and extracting repository contents.
 
 ## Features
 
 - Uses **OpenAI's API** to assist with tasks.
-- Easy-to-use commands: `-branch`, `-commit`, `-translate` and `-review`.
+- Extracting repository content with `-dump` command.
+- Easy-to-use commands: `-branch`, `-commit`, `-translate`, `-review`, and `-dump`.
 - Supports **multi mode** and **single mode**:
-  - **Single Mode**: Sends one request to the API. Used for `-branch`, `-commit` and `-review`.
+  - **Single Mode**: Sends one request to the API. Used for `-branch`, `-commit`, and `-review`.
   - **Multi Mode**: Sends multiple requests to the API. Used for `-translate`.
 
 ## Name Origin of "bento" 🍱
@@ -39,6 +39,7 @@ If you use the `make` command to build and install the 'bento' tool, the output 
 ## Additional Information
 
 - **API Token**: The API token is passed via the environment variable `OPENAI_API_KEY`.
+- **Repository Dump**: The `-dump` command extracts repository content while respecting `.gitignore` and `.aiignore`.
 - **Customization**: To customize, use `-multi` or `-single` and provide a custom prompt with `-prompt`.
 - **Default Model**: The default model is `gpt-4o-mini`, but you can change it with the `-model` option.
 - **Translation**: The `-translate` command translates to English by default; use `-language` to specify the target language.
@@ -53,6 +54,8 @@ Usage of bento:
         Suggest branch name
   -commit
         Suggest commit message
+  -dump
+        Dump repository contents
   -file string
         specify a target file
   -h    Print help information and quit
@@ -79,6 +82,23 @@ Usage of bento:
   -version
         Print version information and quit
 ```
+
+### Using `-dump`
+
+The `-dump` command is used to extract the contents of a Git repository in a structured format. Binary files are excluded, and `.gitignore` and `.aiignore` rules are respected.
+
+To dump the contents of a repository, use:
+
+```bash
+bento -dump /path/to/repo
+```
+
+The output will follow this format:
+
+1. Each section begins with `----`.
+2. The first line after `----` contains the file path and name.
+3. The subsequent lines contain the file contents.
+4. The repository content ends with `--END--`.
 
 ### Using `-branch` and `-commit`
 
