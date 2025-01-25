@@ -13,7 +13,7 @@ func TestRunDump(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
 	cli := NewCLI(outStream, errStream, inputStream, nil, false)
 
-	err := cli.RunDump(repoPath)
+	err := cli.RunDump(repoPath, "")
 	if err != nil {
 		t.Fatalf("RunDump failed: %v", err)
 	}
@@ -32,7 +32,7 @@ func TestRunDumpWithIgnorePatterns(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
 	cli := NewCLI(outStream, errStream, inputStream, nil, false)
 
-	err := cli.RunDump(repoPath)
+	err := cli.RunDump(repoPath, "")
 	if err != nil {
 		t.Fatalf("RunDump failed: %v", err)
 	}
@@ -47,7 +47,7 @@ func TestRunDumpIgnoresBinaryFiles(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
 	cli := NewCLI(outStream, errStream, inputStream, nil, false)
 
-	err := cli.RunDump(repoPath)
+	err := cli.RunDump(repoPath, "")
 	if err != nil {
 		t.Fatalf("RunDump failed: %v", err)
 	}
@@ -62,12 +62,29 @@ func TestRunDumpAIIgnore(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
 	cli := NewCLI(outStream, errStream, inputStream, nil, false)
 
-	err := cli.RunDump(repoPath)
+	err := cli.RunDump(repoPath, "")
 	if err != nil {
 		t.Fatalf("RunDump failed: %v", err)
 	}
 
 	if strings.Contains(outStream.String(), "----\nai_ignored_file.txt") {
 		t.Errorf("files specified in .aiignore should not be included in the output")
+	}
+}
+
+func TestRunDump_WithDescription(t *testing.T) {
+	repoPath := "testdata/repo"
+	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
+	cli := NewCLI(outStream, errStream, inputStream, nil, false)
+
+	description := "This is a test description."
+	err := cli.RunDump(repoPath, description)
+	if err != nil {
+		t.Fatalf("RunDump failed: %v", err)
+	}
+
+	// Check that the output includes the description
+	if !strings.Contains(outStream.String(), description) {
+		t.Fatalf("Expected description %q to be in output, got: %q", description, outStream.String())
 	}
 }

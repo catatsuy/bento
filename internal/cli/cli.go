@@ -61,7 +61,6 @@ func (c *CLI) Run(args []string) int {
 		commitMessage    bool
 		translate        bool
 		review           bool
-		dump             bool
 
 		language     string
 		prompt       string
@@ -69,6 +68,9 @@ func (c *CLI) Run(args []string) int {
 		useModel     string
 		targetFile   string
 		repoPath     string
+
+		dump        bool
+		description string
 
 		isMultiMode  bool
 		isSingleMode bool
@@ -89,7 +91,9 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&commitMessage, "commit", false, "Suggest commit message")
 	flags.BoolVar(&translate, "translate", false, "Translate text")
 	flags.BoolVar(&review, "review", false, "Review source code")
+
 	flags.BoolVar(&dump, "dump", false, "Dump repository contents")
+	flags.StringVar(&description, "description", "", "Description of the repository (dump mode)")
 
 	flags.IntVar(&limit, "limit", DefaultExceedThreshold, "Limit the number of characters to translate")
 
@@ -155,7 +159,7 @@ func (c *CLI) Run(args []string) int {
 			repoPath = flags.Arg(0)
 		}
 
-		if err := c.RunDump(repoPath); err != nil {
+		if err := c.RunDump(repoPath, description); err != nil {
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
 		}

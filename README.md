@@ -54,6 +54,8 @@ Usage of bento:
         Suggest branch name
   -commit
         Suggest commit message
+  -description string
+        Description of the repository (dump mode)
   -dump
         Dump repository contents
   -file string
@@ -99,6 +101,14 @@ The output will follow this format:
 2. The first line after `----` contains the file path and name.
 3. The subsequent lines contain the file contents.
 4. The repository content ends with `--END--`.
+
+#### Description Flag
+
+The `-description` flag allows you to provide a specific description of the repository when using the dump mode. This description will be included in the output.
+
+```bash
+bento -dump -description "This is a sample repository description."
+```
 
 ### Using `-branch` and `-commit`
 
