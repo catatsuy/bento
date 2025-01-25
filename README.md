@@ -102,6 +102,14 @@ The output will follow this format:
 3. The subsequent lines contain the file contents.
 4. The repository content ends with `--END--`.
 
+#### Description Flag
+
+The `-description` flag allows you to provide a specific description of the repository when using the dump mode. This description will be included in the output.
+
+```bash
+bento -dump -description "This is a sample repository description."
+```
+
 ### Using `-branch` and `-commit`
 
 - **`-branch`**: Use this when you haven't created a branch yet. It suggests a branch name based on the current Git diff.
