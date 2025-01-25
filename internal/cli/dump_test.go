@@ -71,3 +71,20 @@ func TestRunDumpAIIgnore(t *testing.T) {
 		t.Errorf("files specified in .aiignore should not be included in the output")
 	}
 }
+
+func TestRunDump_WithDescription(t *testing.T) {
+	repoPath := "testdata/repo"
+	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
+	cli := NewCLI(outStream, errStream, inputStream, nil, false)
+
+	description := "This is a test description."
+	err := cli.RunDump(repoPath, description)
+	if err != nil {
+		t.Fatalf("RunDump failed: %v", err)
+	}
+
+	// Check that the output includes the description
+	if !strings.Contains(outStream.String(), description) {
+		t.Fatalf("Expected description %q to be in output, got: %q", description, outStream.String())
+	}
+}
