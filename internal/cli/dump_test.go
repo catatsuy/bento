@@ -13,7 +13,7 @@ func TestRunDump(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
 	cli := NewCLI(outStream, errStream, inputStream, nil, false)
 
-	err := cli.RunDump(repoPath)
+	err := cli.RunDump(repoPath, "")
 	if err != nil {
 		t.Fatalf("RunDump failed: %v", err)
 	}
@@ -32,7 +32,7 @@ func TestRunDumpWithIgnorePatterns(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
 	cli := NewCLI(outStream, errStream, inputStream, nil, false)
 
-	err := cli.RunDump(repoPath)
+	err := cli.RunDump(repoPath, "")
 	if err != nil {
 		t.Fatalf("RunDump failed: %v", err)
 	}
@@ -47,7 +47,7 @@ func TestRunDumpIgnoresBinaryFiles(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
 	cli := NewCLI(outStream, errStream, inputStream, nil, false)
 
-	err := cli.RunDump(repoPath)
+	err := cli.RunDump(repoPath, "")
 	if err != nil {
 		t.Fatalf("RunDump failed: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestRunDumpAIIgnore(t *testing.T) {
 	outStream, errStream, inputStream := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
 	cli := NewCLI(outStream, errStream, inputStream, nil, false)
 
-	err := cli.RunDump(repoPath)
+	err := cli.RunDump(repoPath, "")
 	if err != nil {
 		t.Fatalf("RunDump failed: %v", err)
 	}

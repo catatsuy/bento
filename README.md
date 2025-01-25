@@ -54,6 +54,8 @@ Usage of bento:
         Suggest branch name
   -commit
         Suggest commit message
+  -description string
+        Description of the repository (dump mode)
   -dump
         Dump repository contents
   -file string

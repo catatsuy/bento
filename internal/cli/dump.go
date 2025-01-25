@@ -14,7 +14,7 @@ import (
 )
 
 // RunDump processes the repository path and writes its contents to standard output.
-func (c *CLI) RunDump(repoPath string) error {
+func (c *CLI) RunDump(repoPath, description string) error {
 	ignorePatterns := make([]string, 0, 10)
 	ignorePatterns = append(ignorePatterns, ".git/") // Default patterns to ignore the .git directory
 
@@ -65,15 +65,22 @@ func (c *CLI) RunDump(repoPath string) error {
 
 	ignores := gitignore.CompileIgnoreLines(ignorePatterns...)
 
-	// Write the initial explanation text
-	if _, err := fmt.Fprintln(c.outStream, `The output represents a Git repository's content in the following format:
+	dumpPrompt := `The output represents a Git repository's content in the following format:
 
 1. Each section begins with ----.
 2. The first line after ---- contains the file path and name.
 3. The subsequent lines contain the file contents.
 4. The repository content ends with --END--.
+`
 
-Any text after --END-- should be treated as instructions, using the repository content as context.`); err != nil {
+	if description != "" {
+		dumpPrompt += "\n" + unescapeString(description) + "\n"
+	}
+
+	dumpPrompt += "\nAny text after --END-- should be treated as instructions, using the repository content as context.\n"
+
+	// Write the initial explanation text
+	if _, err := fmt.Fprintln(c.outStream, dumpPrompt); err != nil {
 		return fmt.Errorf("failed to write header: %w", err)
 	}
 
@@ -139,6 +146,16 @@ Any text after --END-- should be treated as instructions, using the repository c
 	}
 
 	return nil
+}
+
+func unescapeString(input string) string {
+	replacer := strings.NewReplacer(
+		`\\`, `\`,
+		`\n`, "\n",
+		`\t`, "\t",
+		`\r`, "\r",
+	)
+	return replacer.Replace(input)
 }
 
 // readIgnoreFile reads ignore patterns from the specified file and optionally prepends the provided directory to the patterns.
