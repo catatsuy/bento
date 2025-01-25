@@ -13,7 +13,3 @@ func (m *MockTranslator) request(ctx context.Context, systemPrompt, prompt, text
 func (c *CLI) MultiRequest(ctx context.Context, systemPrompt, prompt, useModel string, limit int) error {
 	return c.multiRequest(ctx, systemPrompt, prompt, useModel, limit)
 }
-
-func ShouldIgnore(relPath string, ignorePatterns []string) bool {
-	return shouldIgnore(relPath, ignorePatterns)
-}
