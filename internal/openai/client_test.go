@@ -1,7 +1,6 @@
 package openai_test
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -68,7 +67,7 @@ func TestPostText_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := c.Chat(context.Background(), param)
+	res, err := c.Chat(t.Context(), param)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +124,7 @@ func TestPostText_Fail(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = c.Chat(context.Background(), param)
+	_, err = c.Chat(t.Context(), param)
 
 	if err == nil {
 		t.Fatal("expected error, but nothing was returned")
