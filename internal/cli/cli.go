@@ -22,6 +22,9 @@ const (
 	ExitCodeFail = 1
 
 	DefaultExceedThreshold = 4000
+
+	DefaultOpenAIModel = "gpt-4o-mini"
+	DefaultGeminiModel = "gemini-2.0-flash-lite"
 )
 
 var (
@@ -116,7 +119,7 @@ func (c *CLI) Run(args []string) int {
 	flags.StringVar(&language, "language", "", "Specify the output language")
 	flags.StringVar(&prompt, "prompt", "", "Prompt text")
 	flags.StringVar(&systemPrompt, "system", "", "System prompt text")
-	flags.StringVar(&useModel, "model", "gpt-4o-mini", "Use models such as gpt-4o-mini, gpt-4-turbo, gpt-4o")
+	flags.StringVar(&useModel, "model", DefaultOpenAIModel, "Use models such as gpt-4o-mini, gpt-4-turbo, and gpt-4o. (When using the gemini backend, the default model becomes "+DefaultGeminiModel+")")
 	flags.StringVar(&backend, "backend", "openai", "Backend to use: openai or gemini")
 
 	err := flags.Parse(args[1:])
@@ -165,6 +168,9 @@ func (c *CLI) Run(args []string) int {
 				if apiKey == "" {
 					fmt.Fprintln(c.errStream, "you need to set GEMINI_API_KEY")
 					return ExitCodeFail
+				}
+				if useModel == DefaultOpenAIModel {
+					useModel = DefaultGeminiModel
 				}
 				gt, err := NewGeminiTranslator(apiKey)
 				if err != nil {
