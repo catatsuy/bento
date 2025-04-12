@@ -181,7 +181,7 @@ func (c *CLI) Run(args []string) int {
 			default:
 				apiKey := os.Getenv("OPENAI_API_KEY")
 				if apiKey == "" {
-					fmt.Fprintln(c.errStream, "you need to set OPENAI_API_KEY")
+					fmt.Fprintln(c.errStream, "Error: You need to set OPENAI_API_KEY")
 					return ExitCodeFail
 				}
 				ot, err := NewOpenAITranslator(apiKey)
