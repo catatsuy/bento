@@ -1,0 +1,16 @@
+{
+  "id": "gemini123",
+  "object": "chat.completion",
+  "created": 1677652288,
+  "model": "gemini-2.0-flash-lite",
+  "choices": [
+      {
+          "index": 0,
+          "message": {
+              "role": "assistant",
+              "content": "Here's a joke: Why did the chicken cross the road? To get to the other side!"
+          },
+          "finish_reason": "completed"
+      }
+  ]
+}
