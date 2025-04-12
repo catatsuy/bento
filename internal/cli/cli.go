@@ -166,7 +166,7 @@ func (c *CLI) Run(args []string) int {
 			case "gemini":
 				apiKey := os.Getenv("GEMINI_API_KEY")
 				if apiKey == "" {
-					fmt.Fprintln(c.errStream, "you need to set GEMINI_API_KEY")
+					fmt.Fprintln(c.errStream, "Error: You need to set GEMINI_API_KEY")
 					return ExitCodeFail
 				}
 				if useModel == DefaultOpenAIModel {
