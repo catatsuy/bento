@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/catatsuy/bento/internal/gemini"
 	"github.com/catatsuy/bento/internal/openai"
 )
 
@@ -21,12 +22,16 @@ const (
 	ExitCodeFail = 1
 
 	DefaultExceedThreshold = 4000
+
+	DefaultOpenAIModel = "gpt-4o-mini"
+	DefaultGeminiModel = "gemini-2.0-flash-lite"
 )
 
 var (
 	Version string
 )
 
+// CLI holds the input/output streams and the Translator.
 type CLI struct {
 	outStream, errStream io.Writer
 	inputStream          io.Reader
@@ -38,15 +43,24 @@ type CLI struct {
 	translator Translator
 }
 
+// Translator is the interface used to request a response.
 type Translator interface {
 	request(ctx context.Context, systemPrompt, prompt, input, model string) (string, error)
 }
 
+// NewCLI returns a new CLI instance.
 func NewCLI(outStream, errStream io.Writer, inputStream io.Reader, tr Translator, isStdinTerminal bool) *CLI {
-	return &CLI{appVersion: version(), outStream: outStream, errStream: errStream, inputStream: inputStream, translator: tr, isStdinTerminal: isStdinTerminal}
+	return &CLI{
+		appVersion:      version(),
+		outStream:       outStream,
+		errStream:       errStream,
+		inputStream:     inputStream,
+		translator:      tr,
+		isStdinTerminal: isStdinTerminal,
+	}
 }
 
-// Run parses the CLI arguments and executes the appropriate functionality based on the provided flags.
+// Run parses CLI arguments and executes the appropriate functionality.
 func (c *CLI) Run(args []string) int {
 	if len(args) <= 1 {
 		fmt.Fprintf(c.errStream, "Error: Insufficient arguments provided\n")
@@ -76,6 +90,8 @@ func (c *CLI) Run(args []string) int {
 		isSingleMode bool
 
 		limit int
+
+		backend string
 	)
 
 	flags := flag.NewFlagSet("bento", flag.ContinueOnError)
@@ -85,7 +101,7 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&help, "help", false, "Print help information and quit")
 	flags.BoolVar(&help, "h", false, "Print help information and quit")
 
-	flags.StringVar(&targetFile, "file", "", "specify a target file")
+	flags.StringVar(&targetFile, "file", "", "Specify a target file")
 
 	flags.BoolVar(&branchSuggestion, "branch", false, "Suggest branch name")
 	flags.BoolVar(&commitMessage, "commit", false, "Suggest commit message")
@@ -103,7 +119,8 @@ func (c *CLI) Run(args []string) int {
 	flags.StringVar(&language, "language", "", "Specify the output language")
 	flags.StringVar(&prompt, "prompt", "", "Prompt text")
 	flags.StringVar(&systemPrompt, "system", "", "System prompt text")
-	flags.StringVar(&useModel, "model", "gpt-4o-mini", "Use models such as gpt-4o-mini, gpt-4-turbo, and gpt-4o")
+	flags.StringVar(&useModel, "model", DefaultOpenAIModel, "Use models such as gpt-4o-mini, gpt-4-turbo, and gpt-4o. (When using the gemini backend, the default model becomes "+DefaultGeminiModel+")")
+	flags.StringVar(&backend, "backend", "openai", "Backend to use: openai or gemini")
 
 	err := flags.Parse(args[1:])
 	if err != nil {
@@ -132,19 +149,48 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	if !isMultiMode && !isSingleMode {
-		// Default to single mode if no mode is specified
+		// Default to single mode if no mode is specified.
 		isSingleMode = true
 	}
 
 	if (!translate && !review) && language != "" {
-		fmt.Fprintf(c.errStream, "Error: The '-language' option can only be used with the '-translate' or '-review' option. Please specify one of these options to use '-language'.\n")
+		fmt.Fprintf(c.errStream, "Error: The '-language' option can only be used with '-translate' or '-review'.\n")
 		return ExitCodeFail
 	}
 
+	// If not in dump mode, ensure a translator is set.
 	if !dump {
 		if c.translator == nil {
-			fmt.Fprintf(c.errStream, "you need to set OPENAI_API_KEY\n")
-			return ExitCodeFail
+			// Choose translator based on the backend flag.
+			switch strings.ToLower(backend) {
+			case "gemini":
+				apiKey := os.Getenv("GEMINI_API_KEY")
+				if apiKey == "" {
+					fmt.Fprintln(c.errStream, "Error: You need to set GEMINI_API_KEY")
+					return ExitCodeFail
+				}
+				if useModel == DefaultOpenAIModel {
+					useModel = DefaultGeminiModel
+				}
+				gt, err := NewGeminiTranslator(apiKey)
+				if err != nil {
+					fmt.Fprintf(c.errStream, "Error creating Gemini translator: %v\n", err)
+					return ExitCodeFail
+				}
+				c.translator = gt
+			default:
+				apiKey := os.Getenv("OPENAI_API_KEY")
+				if apiKey == "" {
+					fmt.Fprintln(c.errStream, "Error: You need to set OPENAI_API_KEY")
+					return ExitCodeFail
+				}
+				ot, err := NewOpenAITranslator(apiKey)
+				if err != nil {
+					fmt.Fprintf(c.errStream, "Error creating OpenAI translator: %v\n", err)
+					return ExitCodeFail
+				}
+				c.translator = ot
+			}
 		}
 	}
 
@@ -168,12 +214,12 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	if c.isStdinTerminal && targetFile == "" {
-		fmt.Fprintf(c.errStream, "Error: The '-file' option is required when reading from standard input. Please specify '-file'.\n")
+		fmt.Fprintf(c.errStream, "Error: The '-file' option is required when reading from standard input.\n")
 		return ExitCodeFail
 	}
 
 	if !c.isStdinTerminal && targetFile != "" {
-		fmt.Fprintf(c.errStream, "Error: The '-file' option cannot be used when reading from a file. Please remove '-file'.\n")
+		fmt.Fprintf(c.errStream, "Error: The '-file' option cannot be used when reading from a file.\n")
 		return ExitCodeFail
 	}
 
@@ -195,7 +241,6 @@ func (c *CLI) Run(args []string) int {
 	} else if review {
 		isSingleMode = true
 		isMultiMode = false
-
 		prompt = `Please review the following code as an experienced engineer, focusing only on areas where there are issues. The code is provided as a Git diff, where lines prefixed with + represent additions and lines prefixed with - represent deletions. Analyze the changes accordingly.
 Provide feedback only if there is a problem in any of the following aspects: Completeness, Bugs, Security, Code Style, Performance, Readability, Documentation, Testing, Scalability, Dependencies, or Error Handling.
 If you find a problem, briefly explain the issue and provide a specific suggestion for improvement. When possible, include a code example that demonstrates how to fix the issue. If there are no issues in a particular area, you do not need to mention it. Avoid numbering the feedback items.`
@@ -229,9 +274,7 @@ If you find a problem, briefly explain the issue and provide a specific suggesti
 			fmt.Fprintf(c.errStream, "Error: %v\n", err)
 			return ExitCodeFail
 		}
-
 		fmt.Fprintf(c.outStream, "%s\n", suggestion)
-
 		return ExitCodeOK
 	}
 
@@ -251,7 +294,6 @@ func version() string {
 	if Version != "" {
 		return Version
 	}
-
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return "(devel)"
@@ -259,9 +301,9 @@ func version() string {
 	return info.Main.Version
 }
 
+// multiRequest processes multi-line input in chunks.
 func (c *CLI) multiRequest(ctx context.Context, systemPrompt, prompt, useModel string, limit int) error {
 	var b strings.Builder
-
 	reader := bufio.NewReader(c.inputStream)
 	for {
 		line, err := reader.ReadBytes('\n')
@@ -272,90 +314,112 @@ func (c *CLI) multiRequest(ctx context.Context, systemPrompt, prompt, useModel s
 			return fmt.Errorf("error reading input: %w", err)
 		}
 		b.Write(line)
-
 		if b.Len() > limit {
 			translatedText, err := c.translator.request(ctx, systemPrompt, prompt, b.String(), useModel)
 			if err != nil {
 				return fmt.Errorf("failed to translate text: %w", err)
 			}
-
 			fmt.Fprintf(c.outStream, "%s\n", translatedText)
-
 			b.Reset()
 		}
 	}
-
 	if b.Len() > 0 {
 		translatedText, err := c.translator.request(ctx, systemPrompt, prompt, b.String(), useModel)
 		if err != nil {
 			return fmt.Errorf("failed to translate text: %w", err)
 		}
-
 		fmt.Fprintf(c.outStream, "%s\n", translatedText)
-
 		b.Reset()
 	}
-
 	return nil
 }
 
-type translator struct {
-	Translator
-
-	client *openai.Client
+// GeminiTranslator implements the Translator interface using the Gemini API client.
+type GeminiTranslator struct {
+	client *gemini.Client
 }
 
-func NewTranslator(apiKey string) (*translator, error) {
+// NewGeminiTranslator creates a new GeminiTranslator with the given API key.
+func NewGeminiTranslator(apiKey string) (*GeminiTranslator, error) {
+	client, err := gemini.NewClient(gemini.GeminiAPIURL, apiKey)
+	if err != nil {
+		return nil, fmt.Errorf("NewClient: %w", err)
+	}
+	return &GeminiTranslator{client: client}, nil
+}
+
+// request sends a request to the Gemini API and returns the response text.
+// It constructs a Payload using the provided system prompt (if any) and user prompt.
+func (gt *GeminiTranslator) request(ctx context.Context, systemPrompt, prompt, input, useModel string) (string, error) {
+	if len(input) == 0 {
+		return "", fmt.Errorf("no input")
+	}
+	var data *gemini.Payload
+	if systemPrompt != "" {
+		data = &gemini.Payload{
+			Model: useModel, // e.g., "gemini-2.0-flash"
+			Messages: []gemini.Message{
+				{Role: "user", Content: prompt + input},
+			},
+		}
+	} else {
+		data = &gemini.Payload{
+			Model: useModel,
+			Messages: []gemini.Message{
+				{Role: "user", Content: prompt + input},
+			},
+		}
+	}
+	resp, err := gt.client.Chat(ctx, data)
+	if err != nil {
+		return "", fmt.Errorf("http request: %w", err)
+	}
+	if len(resp.Choices) > 0 {
+		return resp.Choices[0].Message.Content, nil
+	}
+	return "", fmt.Errorf("no translation found")
+}
+
+// NewOpenAITranslator creates a new translator using the OpenAI API.
+func NewOpenAITranslator(apiKey string) (Translator, error) {
 	client, err := openai.NewClient(openai.OpenAIAPIURL, apiKey)
 	if err != nil {
 		return nil, fmt.Errorf("NewClient: %w", err)
 	}
-	return &translator{
-		client: client,
-	}, nil
+	return &openaiTranslator{client: client}, nil
 }
 
-func (tr *translator) request(ctx context.Context, systemPrompt, prompt, input, useModel string) (string, error) {
+type openaiTranslator struct {
+	client *openai.Client
+}
+
+func (ot *openaiTranslator) request(ctx context.Context, systemPrompt, prompt, input, useModel string) (string, error) {
 	if len(input) == 0 {
 		return "", fmt.Errorf("no input")
 	}
-
 	var data *openai.Payload
-
-	if len(systemPrompt) > 0 {
+	if systemPrompt != "" {
 		data = &openai.Payload{
 			Model: useModel,
 			Messages: []openai.Message{
-				{
-					Role:    "system",
-					Content: systemPrompt,
-				},
-				{
-					Role:    "user",
-					Content: prompt + input,
-				},
+				{Role: "system", Content: systemPrompt},
+				{Role: "user", Content: prompt + input},
 			},
 		}
 	} else {
 		data = &openai.Payload{
 			Model: useModel,
 			Messages: []openai.Message{
-				{
-					Role:    "user",
-					Content: prompt + input,
-				},
+				{Role: "user", Content: prompt + input},
 			},
 		}
 	}
-
-	resp, err := tr.client.Chat(ctx, data)
+	resp, err := ot.client.Chat(ctx, data)
 	if err != nil {
 		return "", fmt.Errorf("http request: %w", err)
 	}
-
 	if len(resp.Choices) > 0 {
 		return resp.Choices[0].Message.Content, nil
 	}
-
 	return "", fmt.Errorf("no translation found")
 }

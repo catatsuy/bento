@@ -1,16 +1,16 @@
 # bento
 
 🍱
-bento is a CLI tool that uses OpenAI's API to assist with everyday tasks. It is especially useful for suggesting Git branch names, commit messages, translating text, and extracting repository contents.
+bento is a CLI tool that uses AI APIs to assist with everyday tasks. By default it uses OpenAI's API, but you can switch to Gemini's API with the `-backend` flag. It is especially useful for suggesting Git branch names, commit messages, translating text, and extracting repository contents.
 
 ## Features
 
-- Uses **OpenAI's API** to assist with tasks.
-- Extracting repository content with `-dump` command.
+- Uses **OpenAI's API** by default; support for **Gemini's API** is available via the `-backend gemini` flag.
+- Extracts repository content with the `-dump` command.
 - Easy-to-use commands: `-branch`, `-commit`, `-translate`, `-review`, and `-dump`.
 - Supports **multi mode** and **single mode**:
-  - **Single Mode**: Sends one request to the API. Used for `-branch`, `-commit`, and `-review`.
-  - **Multi Mode**: Sends multiple requests to the API. Used for `-translate`.
+  - **Single Mode**: Sends one request to the API (used for `-branch`, `-commit`, and `-review`).
+  - **Multi Mode**: Sends multiple requests to the API (used for `-translate`).
 
 ## Name Origin of "bento" 🍱
 
@@ -20,36 +20,42 @@ In Japanese, "bento" refers to a lunch box that contains a variety of different 
 
 ## Installation
 
-It is recommended that you use the binaries available on [GitHub Releases](https://github.com/catatsuy/bento/releases). It is advisable to download and use the latest version.
+It is recommended that you use the binaries available on [GitHub Releases](https://github.com/catatsuy/bento/releases). Download and use the latest version.
 
-If you have a Go language development environment set up, you can also compile and install the 'bento' tools on your own.
+Alternatively, if you have Go installed, compile and install bento with:
 
 ```bash
 go install github.com/catatsuy/bento@latest
 ```
 
-To build and modify the 'bento' tools for development purposes, you can use the `make` command.
+To build for development, use:
 
 ```bash
 make
 ```
 
-If you use the `make` command to build and install the 'bento' tool, the output of the `bento -version` command will be the git commit ID of the current version.
+*(When built via `make`, `bento -version` outputs the current git commit ID.)*
 
 ## Additional Information
 
-- **API Token**: The API token is passed via the environment variable `OPENAI_API_KEY`.
+- **API Token**:
+  - OpenAI: passed via the environment variable `OPENAI_API_KEY`.
+  - Gemini: use the `-backend gemini` flag and set the token via `GEMINI_API_KEY`.
 - **Repository Dump**: The `-dump` command extracts repository content while respecting `.gitignore` and `.aiignore`.
-- **Customization**: To customize, use `-multi` or `-single` and provide a custom prompt with `-prompt`.
-- **Default Model**: The default model is `gpt-4o-mini`, but you can change it with the `-model` option.
-- **Translation**: The `-translate` command translates to English by default; use `-language` to specify the target language.
-- **Code Review**: Use the code review feature to get feedback on your code. You can specify the language for the review using the `-language` option.
-- **File Handling**: To work with files, provide the filename with `-file` or use standard input.
+- **Customization**: Use `-multi` or `-single` and override prompts with `-prompt`.
+- **Default Model**:
+  - For OpenAI: default is `gpt-4o-mini`.
+  - For Gemini (with `-backend gemini`): default is `gemini-2.0-flash-lite`.
+- **Translation**: The `-translate` command translates to English by default; change target language with `-language`.
+- **Code Review**: Use `-review` to get code feedback. Specify the output language with `-language`.
+- **File Handling**: Provide a filename with `-file` or use standard input.
 
 ## Usage Examples
 
 ```
 Usage of bento:
+  -backend string
+        Backend to use: openai or gemini (default "openai")
   -branch
         Suggest branch name
   -commit
@@ -59,7 +65,7 @@ Usage of bento:
   -dump
         Dump repository contents
   -file string
-        specify a target file
+        Specify a target file
   -h    Print help information and quit
   -help
         Print help information and quit
@@ -68,7 +74,7 @@ Usage of bento:
   -limit int
         Limit the number of characters to translate (default 4000)
   -model string
-        Use models such as gpt-4o-mini, gpt-4-turbo, and gpt-4o (default "gpt-4o-mini")
+        Use models such as gpt-4o-mini, gpt-4-turbo, and gpt-4o. (When using the gemini backend, the default model becomes gemini-2.0-flash-lite) (default "gpt-4o-mini")
   -multi
         Multi mode
   -prompt string
@@ -206,4 +212,6 @@ bento -single -prompt 'Please summarize the following text:\n\n' -file example.t
 
 ## Tips
 
-- **Prompt Tips**: When using `-branch`, the default prompt is: `Generate a branch name directly from the provided source code differences without any additional text or formatting:`. If you provide a custom prompt, it is recommended to add `"without any additional text or formatting"` at the end for better results.
+- **Prompt Suggestions**: The default prompts are optimized to produce minimal extra text. If using custom prompts, consider appending "without any additional text or formatting".
+- **Backend Switching**: Use the `-backend` flag to switch between OpenAI and Gemini (token is provided via the corresponding environment variable).
+- **Git Integration**: Set up Git aliases as shown above to generate branch names or commit messages directly from diffs.
