@@ -23,7 +23,7 @@ const (
 
 	DefaultExceedThreshold = 4000
 
-	DefaultOpenAIModel = "gpt-4o-mini"
+	DefaultOpenAIModel = "gpt-4.1-nano"
 	DefaultGeminiModel = "gemini-2.0-flash-lite"
 )
 
