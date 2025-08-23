@@ -20,12 +20,7 @@ func TestPostText_Success(t *testing.T) {
 
 	param := &Payload{
 		Model: "gpt-3.5-turbo",
-		Messages: []Message{
-			{
-				Role:    "user",
-				Content: "Hello. I am a student.",
-			},
-		},
+		Input: "Hello. I am a student.",
 	}
 
 	token := "token"
@@ -73,18 +68,19 @@ func TestPostText_Success(t *testing.T) {
 	}
 
 	expected := &Response{
-		ID:      "chatcmpl-123",
-		Object:  "chat.completion",
-		Created: 1677652288,
-		Model:   "gpt-3.5-turbo-0613",
-		Choices: []Choice{
+		ID: "resp_67b73f697ba4819183a15cc17d011509",
+		Output: []OutputMessage{
 			{
-				Index: 0,
-				Message: Message{
-					Role:    "assistant",
-					Content: "\n\nHello there, how may I assist you today?",
+				ID:   "msg_67b73f697ba4819183a15cc17d011509",
+				Type: "message",
+				Role: "assistant",
+				Content: []Content{
+					{
+						Type:        "text",
+						Text:        "\n\nHello there, how may I assist you today?",
+						Annotations: []string{},
+					},
 				},
-				FinishReason: "stop",
 			},
 		},
 		Usage: Usage{
@@ -106,12 +102,7 @@ func TestPostText_Fail(t *testing.T) {
 
 	param := &Payload{
 		Model: "gpt-3",
-		Messages: []Message{
-			{
-				Role:    "user",
-				Content: "Hello. I am a student.",
-			},
-		},
+		Input: "Hello. I am a student.",
 	}
 
 	muxAPI.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

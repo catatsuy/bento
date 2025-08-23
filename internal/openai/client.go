@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	OpenAIAPIURL = "https://api.openai.com/v1/chat/completions"
+	OpenAIAPIURL = "https://api.openai.com/v1/responses"
 )
 
 type Client struct {
@@ -22,8 +22,9 @@ type Client struct {
 }
 
 type Payload struct {
-	Model    string    `json:"model"`
-	Messages []Message `json:"messages"`
+	Model        string `json:"model"`
+	Input        string `json:"input,omitempty"` // Can also be an array of Message objects
+	Instructions string `json:"instructions,omitempty"`
 }
 
 type Message struct {
@@ -32,24 +33,42 @@ type Message struct {
 }
 
 type Response struct {
-	ID      string   `json:"id"`
-	Object  string   `json:"object"`
-	Created int64    `json:"created"`
-	Model   string   `json:"model"`
-	Choices []Choice `json:"choices"`
-	Usage   Usage    `json:"usage"`
+	ID     string          `json:"id"`
+	Output []OutputMessage `json:"output"`
+	Usage  Usage           `json:"usage"`
 }
 
-type Choice struct {
-	Index        int     `json:"index"`
-	Message      Message `json:"message"`
-	FinishReason string  `json:"finish_reason"`
+type OutputMessage struct {
+	ID      string    `json:"id"`
+	Type    string    `json:"type"`
+	Role    string    `json:"role"`
+	Content []Content `json:"content"`
+}
+
+type Content struct {
+	Type        string   `json:"type"`
+	Text        string   `json:"text"`
+	Annotations []string `json:"annotations"`
 }
 
 type Usage struct {
 	PromptTokens     int `json:"prompt_tokens"`
 	CompletionTokens int `json:"completion_tokens"`
 	TotalTokens      int `json:"total_tokens"`
+}
+
+// OutputText returns the first text content from the response
+func (r *Response) OutputText() string {
+	for _, output := range r.Output {
+		if output.Type == "message" {
+			for _, content := range output.Content {
+				if content.Type == "text" || content.Type == "output_text" {
+					return content.Text
+				}
+			}
+		}
+	}
+	return ""
 }
 
 func NewClient(urlStr, apiKey string) (*Client, error) {
@@ -89,7 +108,7 @@ func (c *Client) newRequest(ctx context.Context, method string, body io.Reader) 
 }
 
 func (c *Client) Chat(ctx context.Context, param *Payload) (*Response, error) {
-	if len(param.Messages) == 0 || param.Messages[0].Content == "" {
+	if param.Input == "" {
 		return nil, nil
 	}
 
