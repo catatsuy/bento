@@ -400,26 +400,23 @@ func (ot *openaiTranslator) request(ctx context.Context, systemPrompt, prompt, i
 	var data *openai.Payload
 	if systemPrompt != "" {
 		data = &openai.Payload{
-			Model: useModel,
-			Messages: []openai.Message{
-				{Role: "system", Content: systemPrompt},
-				{Role: "user", Content: prompt + input},
-			},
+			Model:        useModel,
+			Input:        prompt + input,
+			Instructions: systemPrompt,
 		}
 	} else {
 		data = &openai.Payload{
 			Model: useModel,
-			Messages: []openai.Message{
-				{Role: "user", Content: prompt + input},
-			},
+			Input: prompt + input,
 		}
 	}
 	resp, err := ot.client.Chat(ctx, data)
 	if err != nil {
 		return "", fmt.Errorf("http request: %w", err)
 	}
-	if len(resp.Choices) > 0 {
-		return resp.Choices[0].Message.Content, nil
+	outputText := resp.OutputText()
+	if outputText != "" {
+		return outputText, nil
 	}
-	return "", fmt.Errorf("no translation found")
+	return "", fmt.Errorf("no translation found: Response=%+v", resp)
 }
