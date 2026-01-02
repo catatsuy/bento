@@ -1,13 +1,11 @@
-name: OSV-Scanner PR Scan
+name: OSV-Scanner Scheduled Scan
 
-# Change "main" to your default branch if you use a different name, i.e. "master"
 on:
-  pull_request:
-    branches: [main]
-  merge_group:
-    branches: [main]
   schedule:
     - cron: "30 12 * * 1"
+  # Change "main" to your default branch if you use a different name, i.e. "master"
+  push:
+    branches: [main]
 
 permissions:
   # Required to upload SARIF file to CodeQL. See: https://github.com/github/codeql-action/issues/2117
@@ -20,5 +18,3 @@ permissions:
 jobs:
   scan-scheduled:
     uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.1"
-  scan-pr:
-    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.3.1"
