@@ -26,6 +26,8 @@ permissions:
   security-events: write
   # Read commit contents
   contents: read
+  # Allow reusable workflow to read workflow artifacts/actions
+  actions: read
 
 jobs:
   scan-scheduled:
