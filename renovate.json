@@ -32,6 +32,16 @@
       "matchStrings": [
         "go-version: (?<currentValue>[0-9]*.[0-9]*.[0-9]*)"
       ]
+    },
+    {
+      "fileMatch": [
+        "osv-scanner.toml"
+      ],
+      "datasourceTemplate": "golang-version",
+      "depNameTemplate": "golang",
+      "matchStrings": [
+        "GoVersionOverride = \"(?<currentValue>[0-9]*.[0-9]*.[0-9]*)\""
+      ]
     }
   ],
   "postUpdateOptions": [
