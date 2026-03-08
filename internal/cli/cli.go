@@ -119,7 +119,7 @@ func (c *CLI) Run(args []string) int {
 	flags.StringVar(&language, "language", "", "Specify the output language")
 	flags.StringVar(&prompt, "prompt", "", "Prompt text")
 	flags.StringVar(&systemPrompt, "system", "", "System prompt text")
-	flags.StringVar(&useModel, "model", DefaultOpenAIModel, "Use models such as gpt-4o-mini, gpt-4-turbo, and gpt-4o. (When using the gemini backend, the default model becomes "+DefaultGeminiModel+")")
+	flags.StringVar(&useModel, "model", DefaultOpenAIModel, "Use models such as gpt-5-nano, gpt-5-mini, and gpt-5. (When using the gemini backend, the default model becomes "+DefaultGeminiModel+")")
 	flags.StringVar(&backend, "backend", "openai", "Backend to use: openai or gemini")
 
 	err := flags.Parse(args[1:])

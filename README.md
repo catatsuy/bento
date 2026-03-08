@@ -44,7 +44,7 @@ make
 - **Repository Dump**: The `-dump` command extracts repository content while respecting `.gitignore` and `.aiignore`.
 - **Customization**: Use `-multi` or `-single` and override prompts with `-prompt`.
 - **Default Model**:
-  - For OpenAI: default is `gpt-4o-mini`.
+  - For OpenAI: default is `gpt-5-nano` for the lowest cost among the current GPT-5 models.
   - For Gemini (with `-backend gemini`): default is `gemini-2.0-flash-lite`.
 - **Translation**: The `-translate` command translates to English by default; change target language with `-language`.
 - **Code Review**: Use `-review` to get code feedback. Specify the output language with `-language`.
@@ -74,7 +74,7 @@ Usage of bento:
   -limit int
         Limit the number of characters to translate (default 4000)
   -model string
-        Use models such as gpt-4o-mini, gpt-4-turbo, and gpt-4o. (When using the gemini backend, the default model becomes gemini-2.0-flash-lite) (default "gpt-4o-mini")
+        Use models such as gpt-5-nano, gpt-5-mini, and gpt-5. (When using the gemini backend, the default model becomes gemini-2.0-flash-lite) (default "gpt-5-nano")
   -multi
         Multi mode
   -prompt string
@@ -146,7 +146,7 @@ You can also use the `-language` option to specify the output language of the re
 To review code, use the following command:
 
 ```sh
-git diff -w | bento -review -model gpt-4o -language Japanese
+git diff -w | bento -review -model gpt-5 -language Japanese
 ```
 
 In this example, the review results will be in Japanese. You can change the output language by specifying a different language with `-language`.
