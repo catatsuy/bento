@@ -2,6 +2,7 @@
   "extends": [
     "config:recommended"
   ],
+  "minimumReleaseAge": "1 day",
   "customManagers": [
     {
       "customType": "regex",
