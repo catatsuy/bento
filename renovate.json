@@ -23,7 +23,18 @@
       "datasourceTemplate": "golang-version",
       "depNameTemplate": "go-security",
       "matchStrings": [
-        "go-version-input: \"?(?<currentValue>[0-9]*.[0-9]*.[0-9]*)\"?"
+        "go-version: \"?(?<currentValue>[0-9]*.[0-9]*.[0-9]*)\"?"
+      ]
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/.github/workflows/security.yml/"
+      ],
+      "datasourceTemplate": "go",
+      "depNameTemplate": "golang.org/x/vuln",
+      "matchStrings": [
+        "golang.org/x/vuln/cmd/govulncheck@(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
       ]
     },
     {
