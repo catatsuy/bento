@@ -1,10 +1,11 @@
+version: 2
 project_name: bento
-before:
-  hooks:
-    - go mod tidy
 builds:
   - main: ./main.go
     binary: bento
+    flags:
+      - -trimpath
+      - -mod=readonly
     ldflags:
       - -s -w
       - -X github.com/catatsuy/bento/internal/cli.Version=v{{.Version}}
@@ -18,5 +19,8 @@ builds:
       - arm64
 archives:
   - name_template: '{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}'
-release:
-  prerelease: auto
+    formats: [tar.gz]
+    builds_info:
+      mtime: '{{ .CommitTimestamp }}'
+checksum:
+  name_template: checksums.txt
